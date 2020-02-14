@@ -6,8 +6,6 @@ import { IResponseHandlers, ResponseHandler } from './types/Handler';
 import { EAPTTLS } from './eap/eap-ttls';
 
 export class EAPHandler {
-	maxFragmentSize = 1400; // @todo .. take framed-mtu into account from AVPs
-
 	eapTTLS: EAPTTLS;
 
 	constructor() {
@@ -24,16 +22,16 @@ export class EAPHandler {
 		identifier: number,
 		data?: Buffer,
 		msgType = 21,
-		msgFlags = 0b00000000
+		msgFlags = 0x00
 	) {
+		const maxFragmentSize = 1400; // @todo .. take framed-mtu into account from AVPs
 		let i = 0;
 
 		do {
 			const fragmentMaxPart =
-				data && (i + 1) * this.maxFragmentSize > data.length
-					? undefined
-					: (i + 1) * this.maxFragmentSize;
-			const sslPart = data && data.slice(i * this.maxFragmentSize, fragmentMaxPart);
+				data && (i + 1) * maxFragmentSize > data.length ? undefined : (i + 1) * maxFragmentSize;
+			const sslPart = data && data.slice(i * maxFragmentSize, fragmentMaxPart);
+			console.log('sslPart', sslPart, i, maxFragmentSize, i * maxFragmentSize, fragmentMaxPart);
 
 			const includeLength =
 				data &&
@@ -106,7 +104,7 @@ export class EAPHandler {
             and process the next one when client has ack. (message without data)
              */
 			response(resBuffer);
-		} while (data && i * this.maxFragmentSize < data.length);
+		} while (data && i * maxFragmentSize < data.length);
 	}
 
 	handleEAPMessage(msg: Buffer, state: string, handlers: IResponseHandlers) {
