@@ -1,6 +1,7 @@
 import * as events from 'events';
-import { openTLSSockets, startTLSServer } from '../tls/crypt';
-import { IResponseHandlers } from '../types/Handler';
+import * as tls from 'tls';
+import { encodeTunnelPW, openTLSSockets, startTLSServer } from '../tls/crypt';
+import { AdditionalAuthHandler, IResponseHandlers } from '../types/Handler';
 import { PAPChallenge } from './challenges/pap';
 import { IEAPType } from '../types/EAPType';
 
@@ -44,16 +45,20 @@ export class EAPTTLS implements IEAPType {
 			dataStr: data.toString()
 		});
 
-		let sslLayer = openTLSSockets.get(state) as
-			| { socket: events.EventEmitter; currentHandlers: IResponseHandlers }
+		let currentConnection = openTLSSockets.get(state) as
+			| { events: events.EventEmitter; tls: tls.TLSSocket; currentHandlers: IResponseHandlers }
 			| undefined;
-		if (!sslLayer) {
-			const newSocket = startTLSServer();
-			sslLayer = { socket: newSocket, currentHandlers: handlers };
-			openTLSSockets.set(state, sslLayer);
+		if (!currentConnection) {
+			const connection = startTLSServer();
+			currentConnection = {
+				events: connection.events,
+				tls: connection.tls,
+				currentHandlers: handlers
+			};
+			openTLSSockets.set(state, currentConnection);
 
 			// register event listeners
-			newSocket.on('incoming', (incomingData: Buffer) => {
+			currentConnection.events.on('incoming', (incomingData: Buffer) => {
 				const type = incomingData.slice(3, 4).readUInt8(0);
 				// const code = data.slice(4, 5).readUInt8(0);
 
@@ -61,13 +66,18 @@ export class EAPTTLS implements IEAPType {
 					case 1: // PAP / CHAP
 						try {
 							const { username, password } = this.papChallenge.decode(incomingData);
-							sslLayer!.currentHandlers.checkAuth(username, password, identifier);
+							currentConnection!.currentHandlers.checkAuth(username, password);
 						} catch (err) {
 							// pwd not found..
 							console.error('pwd not found', err);
 							// NAK
-							this.sendEAPResponse(sslLayer!.currentHandlers.response, identifier, undefined, 3);
-							newSocket.emit('end');
+							this.sendEAPResponse(
+								currentConnection!.currentHandlers.response,
+								identifier,
+								undefined,
+								3
+							);
+							currentConnection!.events.emit('end');
 							throw new Error(`pwd not found`);
 						}
 						break;
@@ -75,20 +85,20 @@ export class EAPTTLS implements IEAPType {
 						console.log('data', incomingData);
 						console.log('data str', incomingData.toString());
 
-						newSocket.emit('end');
+						currentConnection!.events.emit('end');
 						throw new Error(`unsupported auth type${type}`);
 				}
 			});
 
-			newSocket.on('response', (responseData: Buffer) => {
+			currentConnection.events.on('response', (responseData: Buffer) => {
 				console.log('sending encrypted data back to client', responseData);
 
 				// send back...
-				this.sendEAPResponse(sslLayer!.currentHandlers.response, identifier, responseData);
+				this.sendEAPResponse(currentConnection!.currentHandlers.response, identifier, responseData);
 				// this.sendMessage(TYPE.PRELOGIN, data, false);
 			});
 
-			newSocket.on('end', () => {
+			currentConnection.events.on('end', () => {
 				// cleanup socket
 				console.log('ENDING SOCKET');
 				openTLSSockets.del(state);
@@ -98,13 +108,78 @@ export class EAPTTLS implements IEAPType {
 		}
 
 		// update handlers
-		sslLayer.currentHandlers = {
+		currentConnection.currentHandlers = {
 			...handlers,
-			checkAuth: (username: string, password: string) =>
-				handlers.checkAuth(username, password, identifier)
+			checkAuth: (username: string, password: string) => {
+				const additionalAuthHandler: AdditionalAuthHandler = (success, params) => {
+					const buffer = Buffer.from([
+						success ? 3 : 4, // 3.. success, 4... failure
+						identifier,
+						0, // length (1/2)
+						4 //  length (2/2)
+					]);
+
+					params.attributes.push(['EAP-Message', buffer]);
+
+					if (params.packet.attributes && params.packet.attributes['User-Name']) {
+						// reappend username to response
+						params.attributes.push(['User-Name', params.packet.attributes['User-Name']]);
+					}
+
+					/*
+                if (sess->eap_if->eapKeyDataLen > 64) {
+                              len = 32;
+                      } else {
+                              len = sess->eap_if->eapKeyDataLen / 2;
+                      }
+                 */
+					const keyingMaterial = (currentConnection?.tls as any).exportKeyingMaterial(
+						128,
+						'ttls keying material'
+					);
+
+					console.log('keyingMaterial', keyingMaterial);
+
+					// eapKeyData + len
+					params.attributes.push([
+						'Vendor-Specific',
+						311,
+						[
+							[
+								16,
+								encodeTunnelPW(
+									keyingMaterial.slice(64),
+									(params.packet as any).authenticator,
+									// params.packet.attributes['Message-Authenticator'],
+									params.secret
+								)
+							]
+						]
+					]); //  MS-MPPE-Send-Key
+
+					// eapKeyData
+					params.attributes.push([
+						'Vendor-Specific',
+						311,
+						[
+							[
+								17,
+								encodeTunnelPW(
+									keyingMaterial.slice(0, 64),
+									(params.packet as any).authenticator,
+									// params.packet.attributes['Message-Authenticator'],
+									params.secret
+								)
+							]
+						]
+					]); // MS-MPPE-Recv-Key
+				};
+
+				return handlers.checkAuth(username, password, additionalAuthHandler);
+			}
 		};
 
 		// emit data to tls server
-		sslLayer.socket.emit('send', data);
+		currentConnection.events.emit('send', data);
 	}
 }

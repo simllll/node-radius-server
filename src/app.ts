@@ -1,17 +1,17 @@
 import * as dgram from 'dgram';
 import * as radius from 'radius';
 // import * as dgram from "dgram";
-import * as fs from 'fs';
+// import * as fs from 'fs';
 import { EAPHandler } from './eap';
-import { encodeTunnelPW } from './tls/crypt';
 import { makeid } from './helpers';
 
 import { LDAPAuth } from './ldap';
+import { AdditionalAuthHandler } from './types/Handler';
 
 const server = dgram.createSocket('udp4');
 
 // not used right now, using stunnel to connect to ldap
-const tlsOptions = {
+/* const tlsOptions = {
 	key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
 	cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt'),
 
@@ -20,7 +20,7 @@ const tlsOptions = {
 
 	// This is necessary only if the client uses the self-signed certificate.
 	ca: [fs.readFileSync('ldap.gsuite.hokify.com.40567.key')]
-};
+}; */
 
 const { argv } = require('yargs')
 	.usage('Simple Google LDAP <> RADIUS Server\nUsage: $0')
@@ -62,81 +62,33 @@ server.on('message', async function(msg, rinfo) {
 
 	// console.log('rinfo', rinfo);
 
-	async function checkAuth(username: string, password: string, EAPMessageIdentifier?: number) {
+	async function checkAuth(
+		username: string,
+		password: string,
+		additionalAuthHandler?: AdditionalAuthHandler
+	) {
 		console.log(`Access-Request for ${username}`);
-		let code: 'Access-Accept' | 'Access-Reject';
-
+		let success = false;
 		try {
 			await ldap.authenticate(username, password);
-			code = 'Access-Accept';
+			success = true;
 		} catch (err) {
 			console.error(err);
-			code = 'Access-Reject';
 		}
 
 		const attributes: any[] = [];
-		if (EAPMessageIdentifier) {
-			const buffer = Buffer.from([
-				code === 'Access-Accept' ? 3 : 4, // 3.. success, 4... failure
-				EAPMessageIdentifier,
-				0, // length (1/2)
-				4 //  length (2/2)
-			]);
 
-			attributes.push(['EAP-Message', buffer]);
+		if (additionalAuthHandler) {
+			await additionalAuthHandler(success, { packet, attributes, secret: argv.secret });
 		}
-
-		if (packet.attributes && packet.attributes['User-Name']) {
-			// reappend username to response
-			attributes.push(['User-Name', packet.attributes['User-Name']]);
-		}
-
-		/*
-    if (sess->eap_if->eapKeyDataLen > 64) {
-                  len = 32;
-          } else {
-                  len = sess->eap_if->eapKeyDataLen / 2;
-          }
-     */
-		// eapKeyData + len
-		attributes.push([
-			'Vendor-Specific',
-			311,
-			[
-				[
-					16,
-					encodeTunnelPW(
-						(packet as any).authenticator,
-						packet.attributes['Message-Authenticator'],
-						argv.secret
-					)
-				]
-			]
-		]); //  MS-MPPE-Send-Key
-
-		// eapKeyData
-		attributes.push([
-			'Vendor-Specific',
-			311,
-			[
-				[
-					17,
-					encodeTunnelPW(
-						(packet as any).authenticator,
-						packet.attributes['Message-Authenticator'],
-						argv.secret
-					)
-				]
-			]
-		]); // MS-MPPE-Recv-Key
 
 		const response = radius.encode_response({
 			packet,
-			code,
+			code: success ? 'Access-Accept' : 'Access-Reject',
 			secret: argv.secret,
 			attributes
 		});
-		console.log(`Sending ${code} for user ${username}`);
+		console.log(`Sending ${success ? 'accept' : 'reject'} for user ${username}`);
 
 		server.send(response, 0, response.length, rinfo.port, rinfo.address, function(err, _bytes) {
 			if (err) {

@@ -16,7 +16,7 @@ const tlsOptions = {
 const secureContext = createSecureContext(tlsOptions);
 export const openTLSSockets = new NodeCache({ useClones: false, stdTTL: 3600 }); // keep sockets for about one hour
 
-export function startTLSServer(): events.EventEmitter {
+export function startTLSServer(): { events: events.EventEmitter; tls: tls.TLSSocket } {
 	const duplexpair = new DuplexPair();
 	const emitter = new events.EventEmitter();
 
@@ -58,7 +58,7 @@ export function startTLSServer(): events.EventEmitter {
 			emitter.emit('incoming', data);
 		});
 
-		cleartext.once('close', (data: Buffer) => {
+		cleartext.once('close', (_data: Buffer) => {
 			console.log('cleartext close');
 			emitter.emit('end');
 		});
@@ -82,7 +82,10 @@ export function startTLSServer(): events.EventEmitter {
 		emitter.emit('end');
 	});
 
-	return emitter;
+	return {
+		events: emitter,
+		tls: cleartext
+	};
 }
 
 function md5Hex(buffer: Buffer): Buffer {
@@ -91,18 +94,15 @@ function md5Hex(buffer: Buffer): Buffer {
 	return hasher.digest(); // new Buffer(hasher.digest("binary"), "binary");
 }
 
+// alloc_size
+
+// 0,
+//  EAP_TLS_KEY_LEN 64
+//  EAP_EMSK_LEN 64
+// const buffer = tlsSocket.exportKeyingMaterial(128, 'ttls keying material');
+
 export function encodeTunnelPW(key: Buffer, authenticator: Buffer, secret: string): Buffer {
 	// see freeradius TTLS implementation how to obtain "key"......
-
-	// key should be:
-	// https://www.openssl.org/docs/man1.0.2/man3/SSL_export_keying_material.html
-	// https://github.com/nodejs/ffi/blob/master/deps/openssl/openssl/doc/man3/SSL_export_keying_material.pod
-
-	// but not available in NODE JS
-
-	console.log('KEY', key);
-	console.log('authenticator', authenticator);
-	console.log('secret', secret);
 	// https://tools.ietf.org/html/rfc2548
 
 	/**
@@ -119,9 +119,6 @@ export function encodeTunnelPW(key: Buffer, authenticator: Buffer, secret: strin
 		Buffer.from((Number(makeid(1)) & 0b10000000).toString()), // ensure left most bit is set (1)
 		Buffer.from(makeid(1))
 	]);
-
-	console.log('salt', salt);
-	// ensure left most bit is set to 1
 
 	/*
    String
@@ -143,14 +140,13 @@ export function encodeTunnelPW(key: Buffer, authenticator: Buffer, secret: strin
    used for padding.  Call this plaintext P.
    */
 
-	console.log('key', key.length, key);
 	let P = Buffer.concat([new Uint8Array([key.length]), key]); // + key + padding;
 
 	// fill up with 0x00 till we have % 16
 	while (P.length % 16 !== 0) {
 		P = Buffer.concat([P, Buffer.from([0x00])]);
 	}
-	// console.log('PLAINTEXT', P.length, P);
+
 	/*
    Call the shared secret S, the pseudo-random 128-bit Request
    Authenticator (from the corresponding Access-Request packet) R,
@@ -160,54 +156,8 @@ export function encodeTunnelPW(key: Buffer, authenticator: Buffer, secret: strin
    Intermediate values b(1), b(2)...c(i) are required.  Encryption
    is performed in the following manner ('+' indicates
    concatenation):
-   */
-
-	const p: Buffer[] = [];
-	for (let i = 0; i < P.length; i += 16) {
-		p.push(P.slice(i, i + 16));
-	}
-
-	const S = secret;
-	const R = authenticator;
-	const A = salt;
-
-	// console.log('S', S);
-	// console.log('R', R);
-	// console.log('A', A);
-
-	// const P = Buffer.alloc(16);
-
-	let C;
-	const c: { [key: number]: Buffer } = {};
-	const b: { [key: number]: Buffer } = {};
-
-	// console.log('S + R + A', S + R + A);
-
-	for (let i = 0; i < p.length; i++) {
-		// one octet is 8.. therefore +=2 means next 16
-		if (!i) {
-			b[i] = md5Hex(Buffer.concat([Buffer.from(S), R, A]));
-		} else {
-			b[i] = md5Hex(Buffer.concat([Buffer.from(S), c[i - 1]]));
-		}
-
-		c[i] = Buffer.alloc(16); // ''; //p[i];
-		for (let n = 0; n < p[i].length; n++) {
-			// eslint-disable-next-line no-bitwise
-			c[i][n] = p[i][n] ^ b[i][n];
-		}
-
-		// console.log('c['+i+']', c[i]);
-		// console.log('b['+i+']', b[i]);
-
-		C = C ? Buffer.concat([C, c[i]]) : c[i];
-	}
-
-	const bufferC = Buffer.from(C);
-	console.log('BUFFER C', bufferC.length, bufferC);
-	return Buffer.concat([salt, bufferC]);
-	/*
-   Zorn                         Informational                     [Page 21]
+   
+      Zorn                         Informational                     [Page 21]
 
    RFC 2548      Microsoft Vendor-specific RADIUS Attributes     March 1999
 
@@ -222,4 +172,37 @@ export function encodeTunnelPW(key: Buffer, authenticator: Buffer, secret: strin
    The   resulting   encrypted   String   field    will    contain
    c(1)+c(2)+...+c(i).
    */
+
+	const p: Buffer[] = [];
+	for (let i = 0; i < P.length; i += 16) {
+		p.push(P.slice(i, i + 16));
+	}
+
+	const S = secret;
+	const R = authenticator;
+	const A = salt;
+
+	let C;
+	const c: { [key: number]: Buffer } = {};
+	const b: { [key: number]: Buffer } = {};
+
+	for (let i = 0; i < p.length; i++) {
+		if (!i) {
+			b[i] = md5Hex(Buffer.concat([Buffer.from(S), R, A]));
+		} else {
+			b[i] = md5Hex(Buffer.concat([Buffer.from(S), c[i - 1]]));
+		}
+
+		c[i] = Buffer.alloc(16); // ''; //p[i];
+		for (let n = 0; n < p[i].length; n++) {
+			// eslint-disable-next-line no-bitwise
+			c[i][n] = p[i][n] ^ b[i][n];
+		}
+
+		C = C ? Buffer.concat([C, c[i]]) : c[i];
+	}
+
+	const bufferC = Buffer.from(C);
+
+	return Buffer.concat([salt, bufferC]);
 }
