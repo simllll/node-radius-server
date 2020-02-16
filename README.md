@@ -4,11 +4,7 @@ Basic RADIUS Server for node.js for Google LDAP Service and WPA2 Enteprise WLAN 
 
 ## Known Issues / Disclaimer
 
-This is a first implementation draft, which is currently NOT WORKING:
-
-There is still one major issue left to get things going:
-https://github.com/nodejs/node/issues/31802
-that's why it's currently not possible to calculate MS-MPPE-Send-Key and MS-MPPE-Recv-Key.
+This is a first implementation draft, which is currently only working with a nodejs fork (see https://github.com/nodejs/node/pull/31814).
 
 * PAP / CHAP RFC not found to implement this correctly
 * Project needs more structure and interfaces to extend it more easily in the future (make a full radius server out of it ;)?)

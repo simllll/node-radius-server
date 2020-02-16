@@ -1,0 +1,13 @@
+node_modules/*
+.DS_Store
+
+# build files
+dist
+
+# certificates
+ssl/*.pem
+*.crt
+*.key
+
+# ts
+tsconfig.tsbuildinfo
