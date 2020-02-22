@@ -1,8 +1,6 @@
-import * as NodeCache from 'node-cache';
 import * as events from 'events';
 import * as tls from 'tls';
 import { createSecureContext } from 'tls';
-import * as fs from 'fs';
 import * as crypto from 'crypto';
 import * as DuplexPair from 'native-duplexpair';
 import * as constants from 'constants';
@@ -21,16 +19,20 @@ const tlsOptions: tls.SecureContextOptions = {
 };
 console.log('tlsOptions', tlsOptions);
 const secureContext = createSecureContext(tlsOptions);
-export const openTLSSockets = new NodeCache({ useClones: false, stdTTL: 3600 }); // keep sockets for about one hour
 
-export function startTLSServer(): { events: events.EventEmitter; tls: tls.TLSSocket } {
+export interface ITLSServer {
+	events: events.EventEmitter;
+	tls: tls.TLSSocket;
+}
+
+export function startTLSServer(): ITLSServer {
 	const duplexpair = new DuplexPair();
 	const emitter = new events.EventEmitter();
 
 	const cleartext = new tls.TLSSocket(duplexpair.socket1, {
 		secureContext,
 		isServer: true,
-		enableTrace: true,
+		// enableTrace: true,
 		rejectUnauthorized: false,
 		// handshakeTimeout: 10,
 		requestCert: false

@@ -1,31 +1,32 @@
 {
-  "name": "radius-server",
-  "description": "radius server for google LDAP and TTLT",
-  "version": "0.0.1",
-  "scripts": {
-    "start": "/home/simon/Dev/others/node/node dist/app.js",
-    "build": "tsc",
-    "dev": "ts-node src/app.ts",
-    "test-ttls-pap": "eapol_test -c ./ttls-pap.conf -s testing123",
-    "create-certificate": "sh ./ssl/create.sh && sh ./ssl/sign.sh"
-  },
-  "dependencies": {
-    "native-duplexpair": "^1.0.0",
-    "ldapjs": "^1.0.2",
-    "node-cache": "^5.1.0",
-    "radius": "~1.1.4",
-    "ts-node": "^8.6.2",
-    "type-cacheable": "^4.0.0",
-    "yargs": "~15.1.0",
-    "md5": "^2.2.1",
-    "passport-ldapauth": "^2.1.3"
-  },
-  "devDependencies": {
-    "@types/ldapjs": "^1.0.5",
-    "@types/radius": "0.0.28",
-    "@hokify/eslint-config": "^0.2.2",
-    "eslint": "^6.8.0",
-    "prettier": "^1.19.1",
-    "typescript": "^3.7.5"
-  }
+	"name": "radius-server",
+	"description": "radius server for google LDAP and TTLT",
+	"version": "0.0.1",
+	"scripts": {
+		"start": "/home/simon/Dev/others/node/node dist/app.js",
+		"build": "tsc",
+		"dev": "ts-node src/app.ts",
+		"test-ttls-pap": "eapol_test -c ./ttls-pap.conf -s testing123",
+		"create-certificate": "sh ./ssl/create.sh && sh ./ssl/sign.sh"
+	},
+	"dependencies": {
+		"native-duplexpair": "^1.0.0",
+		"ldapjs": "^1.0.2",
+		"node-cache": "^5.1.0",
+		"radius": "~1.1.4",
+		"ts-node": "^8.6.2",
+		"type-cacheable": "^4.0.0",
+		"yargs": "~15.1.0",
+		"md5": "^2.2.1",
+		"passport-ldapauth": "^2.1.3"
+	},
+	"license": "GPLv3",
+	"devDependencies": {
+		"@types/ldapjs": "^1.0.5",
+		"@types/radius": "0.0.28",
+		"@hokify/eslint-config": "^0.2.4",
+		"eslint": "^6.8.0",
+		"prettier": "^1.19.1",
+		"typescript": "^3.8.2"
+	}
 }

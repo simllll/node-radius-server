@@ -1,14 +1,19 @@
-import * as fs from 'fs';
+/* eslint-disable @typescript-eslint/no-var-requires */
+const fs = require('fs');
+const path = require('path');
+
+const SSL_CERT_DIRECTORY = './ssl/cert';
 
 module.exports = {
+	port: 1812,
 	// radius secret
 	secret: 'testing123',
 
 	certificate: {
-		cert: fs.readFileSync('./ssl/cert/server.crt'),
+		cert: fs.readFileSync(path.join(SSL_CERT_DIRECTORY, '/server.crt')),
 		key: [
 			{
-				pem: fs.readFileSync('./ssl/cert/server.key'),
+				pem: fs.readFileSync(path.join(SSL_CERT_DIRECTORY, '/server.key')),
 				passphrase: 'whatever2020'
 			}
 		]

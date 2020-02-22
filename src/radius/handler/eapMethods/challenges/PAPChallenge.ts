@@ -1,4 +1,4 @@
-import { IEAPChallenge } from '../../types/EAPChallenge';
+import { IEAPChallenge } from '../../../../types/EAPChallenge';
 
 export class PAPChallenge implements IEAPChallenge {
 	// i couldn't find any documentation about it, therefore best guess how this is processed...

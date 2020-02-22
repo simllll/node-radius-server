@@ -8,6 +8,8 @@ export function makeid(length) {
 	return result;
 }
 
+// by RFC Radius attributes have a max length
+// https://tools.ietf.org/html/rfc6929#section-1.2
 export const MAX_RADIUS_ATTRIBUTE_SIZE = 253;
 
 export interface IDeferredPromise {

@@ -4,10 +4,8 @@ node_modules/*
 # build files
 dist
 
-# certificates
-ssl/*.pem
-*.crt
-*.key
-
 # ts
 tsconfig.tsbuildinfo
+
+# custom certificates
+/ssl-*/

@@ -3,7 +3,7 @@
 		"outDir": "./dist",
 		"rootDir": "./src",
 
-		// target settings for node 10
+		// target settings for node js
 		"module": "commonjs",
 		"target": "es2018",
 		"lib": ["es2018"],

@@ -1,6 +1,6 @@
 import * as NodeCache from 'node-cache';
 
-import { createClient, Client } from 'ldapjs';
+import { Client, createClient } from 'ldapjs';
 import { IAuthentication } from '../types/Authentication';
 
 const usernameFields = ['posixUid', 'mail'];
@@ -58,7 +58,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 					});
 
 					res.on('end', result => {
-						console.log(`status: ${result?.status}`);
+						console.log(`ldap status: ${result?.status}`);
 
 						// replace with new dns
 						this.allValidDNsCache = dns;
