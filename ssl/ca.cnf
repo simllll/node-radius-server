@@ -48,11 +48,11 @@ x509_extensions         = v3_ca
 
 [certificate_authority]
 countryName             = AT
-stateOrProvinceName     = Vienna
-localityName            = Vienna
-organizationName        = hokify.com
-emailAddress            = info@hokify.com
-commonName              = "hokify GmbH"
+stateOrProvinceName     = Radius
+localityName            = Somewhere
+organizationName        = Example Inc.
+emailAddress            = admin@example.org
+commonName              = "Example Certificate Authority"
 
 [v3_ca]
 subjectKeyIdentifier    = hash

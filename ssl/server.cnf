@@ -45,10 +45,10 @@ input_password		= whatever2020
 output_password		= whatever2020
 
 [server]
-countryName		= AT
-stateOrProvinceName	= Vienna
-localityName		= Vienna
-organizationName	= hokify.com
-emailAddress		= info@hokify.com
-commonName		= "hokify GmbH"
+countryName             = AT
+stateOrProvinceName     = Radius
+localityName            = Somewhere
+organizationName        = Example Inc.
+emailAddress            = admin@example.org
+commonName              = "Example Certificate Authority"
 
