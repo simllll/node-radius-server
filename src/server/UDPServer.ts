@@ -60,8 +60,6 @@ export class UDPServer extends events.EventEmitter implements IServer {
 		});
 
 		this.server.on('message', (_msg, rinfo) => {
-			console.log('incoming message 2');
-
 			// message retrieved, reset timeout handler
 			const identifierForRetry = `${rinfo.address}:${rinfo.port}`;
 			if (this.timeout[identifierForRetry]) {

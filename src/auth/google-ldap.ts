@@ -1,10 +1,12 @@
 import * as NodeCache from 'node-cache';
 
 import { Client, createClient } from 'ldapjs';
+import debug from 'debug';
 import { IAuthentication } from '../types/Authentication';
 
 const usernameFields = ['posixUid', 'mail'];
 
+const log = debug('radius:auth:ldap');
 // TLS:
 // https://github.com/ldapjs/node-ldapjs/issues/307
 
@@ -41,7 +43,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 					}
 
 					res.on('searchEntry', function(entry) {
-						// console.log('entry: ' + JSON.stringify(entry.object));
+						// log('entry: ' + JSON.stringify(entry.object));
 						usernameFields.forEach(field => {
 							const index = entry.object[field] as string;
 							dns[index] = entry.object.dn;
@@ -49,7 +51,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 					});
 
 					res.on('searchReference', function(referral) {
-						console.log(`referral: ${referral.uris.join()}`);
+						log(`referral: ${referral.uris.join()}`);
 					});
 
 					res.on('error', function(ldapErr) {
@@ -58,11 +60,11 @@ export class GoogleLDAPAuth implements IAuthentication {
 					});
 
 					res.on('end', result => {
-						console.log(`ldap status: ${result?.status}`);
+						log(`ldap status: ${result?.status}`);
 
 						// replace with new dns
 						this.allValidDNsCache = dns;
-						// console.log('allValidDNsCache', this.allValidDNsCache);
+						// log('allValidDNsCache', this.allValidDNsCache);
 						resolve();
 					});
 				}
@@ -84,7 +86,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 		let dnsFetched = false;
 
 		if (!this.lastDNsFetch || this.lastDNsFetch < cacheValidTime || forceFetching) {
-			console.log('fetching dns');
+			log('fetching dns');
 			await this.fetchDNs();
 			dnsFetched = true;
 		}

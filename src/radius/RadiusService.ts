@@ -18,47 +18,9 @@ export class RadiusService {
 		const packet = radius.decode({ packet: msg, secret: this.secret });
 
 		if (packet.code !== 'Access-Request') {
-			console.log('unknown packet type: ', packet.code);
+			console.error('unknown packet type: ', packet.code);
 			return undefined;
 		}
-		// console.log('packet.attributes', packet.attributes);
-
-		// console.log('rinfo', rinfo);
-		/*
-		const checkAuth = async (
-			username: string,
-			password: string,
-			additionalAuthHandler?: AdditionalAuthHandler
-		) => {
-			console.log(`Access-Request for ${username}`);
-			let success = false;
-			try {
-				await this.authentication.authenticate(username, password);
-				success = true;
-			} catch (err) {
-				console.error(err);
-			}
-
-			const attributes: any[] = [];
-
-			if (additionalAuthHandler) {
-				await additionalAuthHandler(success, { packet, attributes, secret: this.secret });
-			}
-
-			const response = radius.encode_response({
-				packet,
-				code: success ? 'Access-Accept' : 'Access-Reject',
-				secret: this.secret,
-				attributes
-			});
-			console.log(`Sending ${success ? 'accept' : 'reject'} for user ${username}`);
-
-			this.server.sendToClient(response, rinfo.port, rinfo.address, function(err, _bytes) {
-				if (err) {
-					console.log('Error sending response to ', rinfo);
-				}
-			});
-		}; */
 
 		let response: IPacketHandlerResult;
 
@@ -67,7 +29,7 @@ export class RadiusService {
 			throw new Error('no packet handlers registered');
 		}
 
-		// process packet handlers until we get a response
+		// process packet handlers until we get a response from one
 		do {
 			/* response is of type IPacketHandlerResult */
 			response = await this.radiusPacketHandlers[i].handlePacket(packet.attributes, packet);

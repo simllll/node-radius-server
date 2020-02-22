@@ -2,6 +2,7 @@
 import * as tls from 'tls';
 import * as NodeCache from 'node-cache';
 import { RadiusPacket } from 'radius';
+import debug from 'debug';
 import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../tls/crypt';
 import { ResponseAuthHandler } from '../../../types/Handler';
 import { PAPChallenge } from './challenges/PAPChallenge';
@@ -11,94 +12,15 @@ import { IEAPMethod } from '../../../types/EAPMethod';
 import { IAuthentication } from '../../../types/Authentication';
 import { secret } from '../../../../config';
 
+const log = debug('radius:eap:ttls');
+
 interface IEAPResponseHandlers {
 	response: (respData?: Buffer, msgType?: number) => void;
 	checkAuth: ResponseAuthHandler;
 }
 
-/*	const handlers = {
-	response: (EAPMessage: Buffer) => {
-		const attributes: any = [['State', Buffer.from(state)]];
-		let sentDataSize = 0;
-		do {
-			if (EAPMessage.length > 0) {
-				attributes.push([
-					'EAP-Message',
-					EAPMessage.slice(sentDataSize, sentDataSize + MAX_RADIUS_ATTRIBUTE_SIZE)
-				]);
-				sentDataSize += MAX_RADIUS_ATTRIBUTE_SIZE;
-			}
-		} while (sentDataSize < EAPMessage.length);
-
-		const response = radius.encode_response({
-			packet,
-			code: 'Access-Challenge',
-			secret: this.secret,
-			attributes
-		});
-
-		waitForNextMsg[state] = newDeferredPromise();
-
-		server.sendToClient(
-			response,
-			rinfo.port,
-			rinfo.address,
-			function(err, _bytes) {
-				if (err) {
-					console.log('Error sending response to ', rinfo);
-				}
-			},
-			state
-		);
-
-		return waitForNextMsg[state].promise;
-	},
-	checkAuth
-};
-
-
-const attributes: any = [['State', Buffer.from(stateID)]];
-let sentDataSize = 0;
-do {
-	if (EAPMessage.length > 0) {
-		attributes.push([
-			'EAP-Message',
-			EAPMessage.slice(sentDataSize, sentDataSize + MAX_RADIUS_ATTRIBUTE_SIZE)
-		]);
-		sentDataSize += MAX_RADIUS_ATTRIBUTE_SIZE;
-	}
-} while (sentDataSize < EAPMessage.length);
-
-const response = radius.encode_response({
-	packet,
-	code: 'Access-Challenge',
-	secret: this.secret,
-	attributes
-});
-
-waitForNextMsg[stateID] = newDeferredPromise();
-
-server.sendToClient(
-	response,
-	rinfo.port,
-	rinfo.address,
-	function(err, _bytes) {
-		if (err) {
-			console.log('Error sending response to ', rinfo);
-		}
-	},
-	stateID
-);
-
-return waitForNextMsg[stateID].promise;
-*/
-/* if (waitForNextMsg[state]) {
-	const identifier = attributes['EAP-Message'].slice(1, 2).readUInt8(0); // .toString('hex');
-	waitForNextMsg[state].resolve({ response: handlers.response, identifier });
-} */
-
 function tlsHasExportKeyingMaterial(
-	tlsSocket: any
+	tlsSocket
 ): tlsSocket is {
 	exportKeyingMaterial: (length: number, label: string, context?: Buffer) => Buffer;
 } {
@@ -132,7 +54,7 @@ export class EAPTTLS implements IEAPMethod {
 		newResponse = true
 	): IPacketHandlerResult {
 		const maxSize = (MAX_RADIUS_ATTRIBUTE_SIZE - 5) * 4;
-		console.log('maxSize', maxSize);
+		log('maxSize', maxSize);
 
 		/* it's the first one and we have more, therefore include length */
 		const includeLength = data && newResponse && data.length > maxSize;
@@ -187,7 +109,7 @@ export class EAPTTLS implements IEAPMethod {
 		// set EAP length header
 		resBuffer.writeUInt16BE(resBuffer.byteLength, 2);
 
-		console.log('<<<<<<<<<<<< EAP RESPONSE TO CLIENT', {
+		log('<<<<<<<<<<<< EAP RESPONSE TO CLIENT', {
 			code: 1,
 			identifier: identifier + 1,
 			includeLength,
@@ -298,50 +220,19 @@ export class EAPTTLS implements IEAPMethod {
 			attributes.push(['User-Name', packet.attributes['User-Name']]);
 		}
 
-		/*
-					if (sess->eap_if->eapKeyDataLen > 64) {
-												len = 32;
-								} else {
-												len = sess->eap_if->eapKeyDataLen / 2;
-								}
-					 */
 		if (tlsHasExportKeyingMaterial(socket)) {
 			const keyingMaterial = (socket as any).exportKeyingMaterial(128, 'ttls keying material');
 
-			// console.log('keyingMaterial', keyingMaterial);
-
-			// eapKeyData + len
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[
-					[
-						16,
-						encodeTunnelPW(
-							keyingMaterial.slice(64),
-							(packet as any).authenticator,
-							// params.packet.attributes['Message-Authenticator'],
-							secret
-						)
-					]
-				]
+				[[16, encodeTunnelPW(keyingMaterial.slice(64), (packet as any).authenticator, secret)]]
 			]); //  MS-MPPE-Send-Key
 
-			// eapKeyData
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[
-					[
-						17,
-						encodeTunnelPW(
-							keyingMaterial.slice(0, 64),
-							(packet as any).authenticator,
-							// params.packet.attributes['Message-Authenticator'],
-							secret
-						)
-					]
-				]
+				[[17, encodeTunnelPW(keyingMaterial.slice(0, 64), (packet as any).authenticator, secret)]]
 			]); // MS-MPPE-Recv-Key
 		} else {
 			console.error(
@@ -365,7 +256,7 @@ export class EAPTTLS implements IEAPMethod {
 
 		// check if no data package is there and we have something in the queue, if so.. empty the queue first
 		if (!data || data.length === 0) {
-			console.warn(
+			log(
 				`>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS, ACK / NACK (no data, just a confirmation, ID: ${identifier})`
 			);
 			const queuedData = this.queueData.get(stateID);
@@ -376,7 +267,7 @@ export class EAPTTLS implements IEAPMethod {
 			return {};
 		}
 
-		console.log('>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS', {
+		log('>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS', {
 			// flags: `00000000${flags.toString(2)}`.substr(-8),
 			decodedFlags,
 			identifier,
@@ -393,7 +284,7 @@ export class EAPTTLS implements IEAPMethod {
 
 			connection.events.on('end', () => {
 				// cleanup socket
-				console.log('ENDING SOCKET');
+				log('ENDING SOCKET');
 				this.openTLSSockets.del(stateID);
 			});
 		}
@@ -422,12 +313,12 @@ export class EAPTTLS implements IEAPMethod {
 					}
 					break;
 				default:
-					console.log('data', incomingData);
-					console.log('data str', incomingData.toString());
+					log('data', incomingData);
+					log('data str', incomingData.toString());
 
 					// currentConnection!.events.emit('end');
 
-					console.log('UNSUPPORTED AUTH TYPE, requesting PAP');
+					log('UNSUPPORTED AUTH TYPE, requesting PAP');
 					// throw new Error(`unsupported auth type${type}`);
 					sendResponsePromise.resolve(
 						this.buildEAPTTLSResponse(identifier, 3, 0, stateID, Buffer.from([1]))

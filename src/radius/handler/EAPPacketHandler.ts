@@ -2,6 +2,7 @@
 
 import * as NodeCache from 'node-cache';
 import { RadiusPacket } from 'radius';
+import debug from 'debug';
 import { EAPTTLS } from './eapMethods/EAPTTLS';
 import { makeid } from '../../helpers';
 import {
@@ -11,6 +12,8 @@ import {
 } from '../../types/PacketHandler';
 import { IAuthentication } from '../../types/Authentication';
 import { IEAPMethod } from '../../types/EAPMethod';
+
+const log = debug('radius:eap');
 
 export class EAPPacketHandler implements IPacketHandler {
 	private eapMethods: IEAPMethod[] = [];
@@ -124,7 +127,7 @@ export class EAPPacketHandler implements IPacketHandler {
 			case 2: // for response
 				switch (type) {
 					case 1: // identifiy
-						console.log('>>>>>>>>>>>> REQUEST FROM CLIENT: IDENTIFY', {});
+						log('>>>>>>>>>>>> REQUEST FROM CLIENT: IDENTIFY', {});
 						// start identify
 						if (currentState.validMethods.length > 0) {
 							return currentState.validMethods[0].identify(identifier, stateID);
@@ -132,11 +135,11 @@ export class EAPPacketHandler implements IPacketHandler {
 
 						return this.buildEAPResponse(identifier, 3);
 					case 2: // notification
-						console.log('>>>>>>>>>>>> REQUEST FROM CLIENT: notification', {});
+						log('>>>>>>>>>>>> REQUEST FROM CLIENT: notification', {});
 						console.info('notification');
 						break;
 					case 4: // md5-challenge
-						console.log('>>>>>>>>>>>> REQUEST FROM CLIENT: md5-challenge', {});
+						log('>>>>>>>>>>>> REQUEST FROM CLIENT: md5-challenge', {});
 
 						console.info('md5-challenge');
 						break;
@@ -145,6 +148,8 @@ export class EAPPacketHandler implements IPacketHandler {
 						break;
 					case 3: // nak
 						if (data) {
+							// if there is data, each data octect reprsents a eap method the clients supports,
+							// kick out all unsupported ones
 							const supportedEAPMethods: number[] = [];
 							for (const supportedMethod of data) {
 								supportedEAPMethods.push(supportedMethod);
@@ -180,10 +185,10 @@ export class EAPPacketHandler implements IPacketHandler {
 				}
 				break;
 			case 3:
-				console.log('Client Auth Success');
+				log('Client Auth Success');
 				break;
 			case 4:
-				console.log('Client Auth FAILURE');
+				log('Client Auth FAILURE');
 				break;
 			default:
 		}

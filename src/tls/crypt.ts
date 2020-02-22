@@ -4,8 +4,11 @@ import { createSecureContext } from 'tls';
 import * as crypto from 'crypto';
 import * as DuplexPair from 'native-duplexpair';
 import * as constants from 'constants';
+import debug from 'debug';
 import { makeid } from '../helpers';
 import * as config from '../../config';
+
+const log = debug('radius:tls');
 
 // https://nodejs.org/api/tls.html
 const tlsOptions: tls.SecureContextOptions = {
@@ -17,7 +20,7 @@ const tlsOptions: tls.SecureContextOptions = {
 	// secureOptions:
 	// ecdhCurve: 'auto'
 };
-console.log('tlsOptions', tlsOptions);
+log('tlsOptions', tlsOptions);
 const secureContext = createSecureContext(tlsOptions);
 
 export interface ITLSServer {
@@ -45,7 +48,7 @@ export function startTLSServer(): ITLSServer {
 	});
 
 	encrypted.on('data', (data: Buffer) => {
-		// console.log('encrypted data', data, data.toString());
+		// log('encrypted data', data, data.toString());
 		emitter.emit('response', data);
 	});
 
@@ -53,42 +56,42 @@ export function startTLSServer(): ITLSServer {
 		const cipher = cleartext.getCipher();
 
 		/*
-        console.log('Authorized', cleartext.authorized);
-        console.log('getTLSTicket', cleartext.getTLSTicket());
-        console.log('getEphemeralKeyInfo', cleartext.getEphemeralKeyInfo());
-        console.log('getPeerCertificate', cleartext.getPeerCertificate());
-        console.log('getSharedSigalgs', cleartext.getSharedSigalgs());
-        console.log('getCertificate', cleartext.getCertificate());
-        console.log('getSession', cleartext.getSession());
+        log('Authorized', cleartext.authorized);
+        log('getTLSTicket', cleartext.getTLSTicket());
+        log('getEphemeralKeyInfo', cleartext.getEphemeralKeyInfo());
+        log('getPeerCertificate', cleartext.getPeerCertificate());
+        log('getSharedSigalgs', cleartext.getSharedSigalgs());
+        log('getCertificate', cleartext.getCertificate());
+        log('getSession', cleartext.getSession());
         */
 
 		if (cipher) {
-			console.log(`TLS negotiated (${cipher.name}, ${cipher.version})`);
+			log(`TLS negotiated (${cipher.name}, ${cipher.version})`);
 		}
 
 		cleartext.on('data', (data: Buffer) => {
-			// console.log('cleartext data', data, data.toString());
+			// log('cleartext data', data, data.toString());
 			emitter.emit('incoming', data);
 		});
 
 		cleartext.once('close', (_data: Buffer) => {
-			console.log('cleartext close');
+			log('cleartext close');
 			emitter.emit('end');
 		});
 
 		cleartext.on('keylog', line => {
-			console.log('############ KEYLOG #############', line);
+			log('############ KEYLOG #############', line);
 			// cleartext.getTicketKeys()
 		});
 
-		console.log('*********** new client connection established / secured ********');
+		log('*********** new client connection established / secured ********');
 		//        this.emit('secure', securePair.cleartext);
 		//        this.encryptAllFutureTraffic();
-		console.log('GET FINSIHED', cleartext.getFinished());
+		log('GET FINSIHED', cleartext.getFinished());
 	});
 
 	cleartext.on('error', (err?: Error) => {
-		console.log('cleartext error', err);
+		log('cleartext error', err);
 
 		encrypted.destroy();
 		cleartext.destroy(err);

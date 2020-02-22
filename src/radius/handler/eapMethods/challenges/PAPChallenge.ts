@@ -1,4 +1,7 @@
+import debug from 'debug';
 import { IEAPChallenge } from '../../../../types/EAPChallenge';
+
+const log = debug('radius:eap:papchallenge');
 
 export class PAPChallenge implements IEAPChallenge {
 	// i couldn't find any documentation about it, therefore best guess how this is processed...
@@ -7,7 +10,7 @@ export class PAPChallenge implements IEAPChallenge {
 	decode(data: Buffer) {
 		const usrNameLength = data.slice(7, 8).readUInt8(0);
 		const user = data.slice(8, usrNameLength);
-		console.log('user', user, user.toString().trim());
+		log('user', user, user.toString().trim());
 
 		let pwdStart = usrNameLength; // data.slice(usrNameLength);
 		const passwordDelimeter = Buffer.from([0x02, 0x40, 0x00, 0x00]);
@@ -27,14 +30,14 @@ export class PAPChallenge implements IEAPChallenge {
 		if (!found) {
 			throw new Error("couldn't extract password");
 		}
-		// console.log('pwdStart+passwordDelimeter.length', pwdStart+passwordDelimeter.length);
-		// console.log('length', pwdStart + data.readUInt8(pwdStart+passwordDelimeter.length));
+		// log('pwdStart+passwordDelimeter.length', pwdStart+passwordDelimeter.length);
+		// log('length', pwdStart + data.readUInt8(pwdStart+passwordDelimeter.length));
 		// first byte is a length property.. we ignore for now
 		pwd = data.slice(pwdStart + passwordDelimeter.length + 1); // , pwdStart+ data.readUInt8(pwdStart+passwordDelimeter.length));
 		// trim pwd
 		pwd = pwd.slice(0, pwd.indexOf(0x00));
 
-		console.log('pwd', pwd, pwd.toString().trim().length, pwd.toString());
+		log('pwd', pwd, pwd.toString().trim().length, pwd.toString());
 
 		return {
 			username: user.toString(),
