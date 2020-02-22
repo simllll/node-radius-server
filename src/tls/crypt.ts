@@ -5,14 +5,21 @@ import { createSecureContext } from 'tls';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import * as DuplexPair from 'native-duplexpair';
+import * as constants from 'constants';
 import { makeid } from '../helpers';
+import * as config from '../../config';
 
 // https://nodejs.org/api/tls.html
-const tlsOptions = {
-	cert: fs.readFileSync('./ssl/public-cert.pem'),
-	key: fs.readFileSync('./ssl/private-key.pem'),
-	ecdhCurve: 'auto'
+const tlsOptions: tls.SecureContextOptions = {
+	...config.certificate,
+	// ca: fs.readFileSync('./ssl/server.pem'),
+	// eslint-disable-next-line no-bitwise
+	secureOptions: constants.SSL_OP_NO_TICKET // : constants.SSL_OP_NO_TLSv1_2 | constants.SSL_OP_NO_TLSv1_1,
+	// honorCipherOrder: true
+	// secureOptions:
+	// ecdhCurve: 'auto'
 };
+console.log('tlsOptions', tlsOptions);
 const secureContext = createSecureContext(tlsOptions);
 export const openTLSSockets = new NodeCache({ useClones: false, stdTTL: 3600 }); // keep sockets for about one hour
 
@@ -22,7 +29,11 @@ export function startTLSServer(): { events: events.EventEmitter; tls: tls.TLSSoc
 
 	const cleartext = new tls.TLSSocket(duplexpair.socket1, {
 		secureContext,
-		isServer: true
+		isServer: true,
+		enableTrace: true,
+		rejectUnauthorized: false,
+		// handshakeTimeout: 10,
+		requestCert: false
 	});
 	const encrypted = duplexpair.socket2;
 
@@ -71,6 +82,7 @@ export function startTLSServer(): { events: events.EventEmitter; tls: tls.TLSSoc
 		console.log('*********** new client connection established / secured ********');
 		//        this.emit('secure', securePair.cleartext);
 		//        this.encryptAllFutureTraffic();
+		console.log('GET FINSIHED', cleartext.getFinished());
 	});
 
 	cleartext.on('error', (err?: Error) => {

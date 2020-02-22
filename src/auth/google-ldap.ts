@@ -1,13 +1,14 @@
 import * as NodeCache from 'node-cache';
 
 import { createClient, Client } from 'ldapjs';
+import { IAuthentication } from '../types/Authentication';
 
 const usernameFields = ['posixUid', 'mail'];
 
 // TLS:
 // https://github.com/ldapjs/node-ldapjs/issues/307
 
-export class LDAPAuth {
+export class GoogleLDAPAuth implements IAuthentication {
 	cache = new NodeCache();
 
 	ldap: Client;
@@ -24,7 +25,7 @@ export class LDAPAuth {
 		this.fetchDNs();
 	}
 
-	async fetchDNs() {
+	private async fetchDNs() {
 		const dns: { [key: string]: string } = {};
 
 		await new Promise((resolve, reject) => {
@@ -119,6 +120,6 @@ export class LDAPAuth {
 
 		this.cache.set(cacheKey, true, 86400);
 
-		return true;
+		return username;
 	}
 }

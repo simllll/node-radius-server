@@ -7,3 +7,33 @@ export function makeid(length) {
 	}
 	return result;
 }
+
+export const MAX_RADIUS_ATTRIBUTE_SIZE = 253;
+
+export interface IDeferredPromise {
+	promise: Promise<any>;
+	resolve: (value?: unknown) => Promise<void>;
+	reject: (reason?: any) => Promise<void>;
+}
+
+export const newDeferredPromise = (): IDeferredPromise => {
+	if (Promise && !('deferred' in Promise)) {
+		let fResolve;
+		let fReject;
+
+		const P = new Promise((resolve, reject) => {
+			fResolve = resolve;
+			fReject = reject;
+		});
+		return {
+			promise: P,
+			resolve: fResolve,
+			reject: fReject
+		};
+	}
+
+	return (Promise as any).deferred;
+};
+
+export const delay = (timeout: number) =>
+	new Promise(resolve => setTimeout(() => resolve(), timeout));

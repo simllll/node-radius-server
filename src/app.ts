@@ -3,27 +3,15 @@ import * as radius from 'radius';
 // import * as dgram from "dgram";
 // import * as fs from 'fs';
 import { EAPHandler } from './eap';
-import { makeid } from './helpers';
+import { IDeferredPromise, makeid, MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from './helpers';
 
-import { LDAPAuth } from './ldap';
+import { GoogleLDAPAuth } from './auth/google-ldap';
 import { AdditionalAuthHandler } from './types/Handler';
 
 const server = dgram.createSocket('udp4');
 
-// not used right now, using stunnel to connect to ldap
-/* const tlsOptions = {
-	key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
-	cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt'),
-
-	// This is necessary only if using the client certificate authentication.
-	requestCert: true,
-
-	// This is necessary only if the client uses the self-signed certificate.
-	ca: [fs.readFileSync('ldap.gsuite.hokify.com.40567.key')]
-}; */
-
 const { argv } = require('yargs')
-	.usage('Simple Google LDAP <> RADIUS Server\nUsage: $0')
+	.usage('RADIUS Server\nUsage: $0')
 	.example('$0 --port 1812 -s radiussecret')
 	.default({
 		port: 1812,
@@ -46,9 +34,39 @@ console.log(`LDAP Server: ${argv.ldapServer}`);
 
 // const ldap = new LDAPAuth({url: 'ldap://ldap.google.com', base: 'dc=hokify,dc=com', uid: 'uid', tlsOptions});
 
-const ldap = new LDAPAuth(argv.ldapServer, argv.baseDN);
+const ldap = new GoogleLDAPAuth(argv.ldapServer, argv.baseDN);
 
 const eapHandler = new EAPHandler();
+const timeout: { [key: string]: NodeJS.Timeout } = {};
+const waitForNextMsg: { [key: string]: IDeferredPromise } = {};
+
+function sendToClient(
+	msg: string | Uint8Array,
+	offset: number,
+	length: number,
+	port?: number,
+	address?: string,
+	callback?: (error: Error | null, bytes: number) => void,
+	stateForRetry?: string
+): void {
+	let retried = 0;
+
+	function sendResponse() {
+		console.log(`sending response... (try: ${retried})`);
+		server.send(msg, offset, length, port, address, (error: Error | null, bytes: number) => {
+			// all good
+
+			if (callback) callback(error, bytes);
+		});
+
+		if (stateForRetry && retried < 3) {
+			// timeout[stateForRetry] = setTimeout(sendResponse, 600 * (retried+1));
+		}
+		retried++;
+	}
+
+	sendResponse();
+}
 
 server.on('message', async function(msg, rinfo) {
 	const packet = radius.decode({ packet: msg, secret: argv.secret });
@@ -57,7 +75,6 @@ server.on('message', async function(msg, rinfo) {
 		console.log('unknown packet type: ', packet.code);
 		return;
 	}
-
 	// console.log('packet.attributes', packet.attributes);
 
 	// console.log('rinfo', rinfo);
@@ -90,7 +107,7 @@ server.on('message', async function(msg, rinfo) {
 		});
 		console.log(`Sending ${success ? 'accept' : 'reject'} for user ${username}`);
 
-		server.send(response, 0, response.length, rinfo.port, rinfo.address, function(err, _bytes) {
+		sendToClient(response, 0, response.length, rinfo.port, rinfo.address, function(err, _bytes) {
 			if (err) {
 				console.log('Error sending response to ', rinfo);
 			}
@@ -99,15 +116,22 @@ server.on('message', async function(msg, rinfo) {
 
 	if (packet.attributes['EAP-Message']) {
 		const state = (packet.attributes.State && packet.attributes.State.toString()) || makeid(16);
-		// EAP MESSAGE
-		eapHandler.handleEAPMessage(packet.attributes['EAP-Message'], state, {
+
+		if (timeout[state]) {
+			clearTimeout(timeout[state]);
+		}
+
+		const handlers = {
 			response: (EAPMessage: Buffer) => {
 				const attributes: any = [['State', Buffer.from(state)]];
 				let sentDataSize = 0;
 				do {
 					if (EAPMessage.length > 0) {
-						attributes.push(['EAP-Message', EAPMessage.slice(sentDataSize, sentDataSize + 253)]);
-						sentDataSize += 253;
+						attributes.push([
+							'EAP-Message',
+							EAPMessage.slice(sentDataSize, sentDataSize + MAX_RADIUS_ATTRIBUTE_SIZE)
+						]);
+						sentDataSize += MAX_RADIUS_ATTRIBUTE_SIZE;
 					}
 				} while (sentDataSize < EAPMessage.length);
 
@@ -118,14 +142,34 @@ server.on('message', async function(msg, rinfo) {
 					attributes
 				});
 
-				server.send(response, 0, response.length, rinfo.port, rinfo.address, function(err, _bytes) {
-					if (err) {
-						console.log('Error sending response to ', rinfo);
-					}
-				});
+				waitForNextMsg[state] = newDeferredPromise();
+
+				sendToClient(
+					response,
+					0,
+					response.length,
+					rinfo.port,
+					rinfo.address,
+					function(err, _bytes) {
+						if (err) {
+							console.log('Error sending response to ', rinfo);
+						}
+					},
+					state
+				);
+
+				return waitForNextMsg[state].promise;
 			},
 			checkAuth
-		});
+		};
+
+		if (waitForNextMsg[state]) {
+			const identifier = packet.attributes['EAP-Message'].slice(1, 2).readUInt8(0); // .toString('hex');
+			waitForNextMsg[state].resolve({ response: handlers.response, identifier });
+		}
+
+		// EAP MESSAGE
+		eapHandler.handleEAPMessage(packet.attributes['EAP-Message'], state, handlers);
 	} else {
 		const username = packet.attributes['User-Name'];
 		const password = packet.attributes['User-Password'];
