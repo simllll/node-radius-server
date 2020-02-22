@@ -1,6 +1,6 @@
-import { IAuthChallenge } from '../../types/AuthChallenge';
+import { IEAPChallenge } from '../../types/EAPChallenge';
 
-export class PAPChallenge implements IAuthChallenge {
+export class PAPChallenge implements IEAPChallenge {
 	// i couldn't find any documentation about it, therefore best guess how this is processed...
 	// http://www.networksorcery.com/enp/rfc/rfc1334.txt ?
 

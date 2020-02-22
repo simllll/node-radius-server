@@ -4,6 +4,7 @@
 // https://tools.ietf.org/html/draft-funk-eap-ttls-v1-00 TTLS v1 (not implemented)
 import { IResponseHandlers, ResponseHandler } from './types/Handler';
 import { EAPTTLS } from './eap/eap-ttls';
+import { MAX_RADIUS_ATTRIBUTE_SIZE } from './helpers';
 
 export class EAPHandler {
 	eapTTLS: EAPTTLS;
@@ -17,28 +18,35 @@ export class EAPHandler {
 	 * @param data
 	 * @param type 1 = identity, 21 = EAP-TTLS, 2 = notification, 4 = md5-challenge, 3 = NAK
 	 */
-	private sendEAPResponse(
+	private async sendEAPResponse(
 		response: ResponseHandler,
 		identifier: number,
 		data?: Buffer,
 		msgType = 21,
 		msgFlags = 0x00
 	) {
-		const maxFragmentSize = 1400; // @todo .. take framed-mtu into account from AVPs
 		let i = 0;
 
+		const maxSize = (MAX_RADIUS_ATTRIBUTE_SIZE - 5) * 4;
+
+		let sentDataSize = 0;
+
+		let currentIdentifier = identifier;
+		let currentResponse = response;
+
 		do {
-			const fragmentMaxPart =
-				data && (i + 1) * maxFragmentSize > data.length ? undefined : (i + 1) * maxFragmentSize;
-			const sslPart = data && data.slice(i * maxFragmentSize, fragmentMaxPart);
-			console.log('sslPart', sslPart, i, maxFragmentSize, i * maxFragmentSize, fragmentMaxPart);
+			// SLICE
 
-			const includeLength =
-				data &&
-				i === 0 &&
-				fragmentMaxPart !== undefined; /* firsrt one and we have more, therefore include length */
+			// const fragmentMaxPart =
+			// data && (i + 1) * maxFragmentSize > data.length ? (i + 1) * maxFragmentSize : undefined;
 
-			// console.log('includeLength', includeLength, fragmentMaxPart, i)
+			const dataPart = data && data.length > 0 && data.slice(sentDataSize, sentDataSize + maxSize);
+
+			/* it's the first one and we have more, therefore include length */
+			const includeLength = data && i === 0 && sentDataSize < data.length;
+
+			sentDataSize += maxSize;
+
 			i += 1;
 
 			/*
@@ -62,11 +70,13 @@ export class EAPHandler {
 			const flags =
 				msgFlags +
 				(includeLength ? 0b10000000 : 0) + // set L bit
-				(fragmentMaxPart /* we have more */ ? 0b01000000 : 0); // set M bit
+				(data && sentDataSize < data.length /* we have more */ ? 0b01000000 : 0); // set M bit
+
+			currentIdentifier++;
 
 			let buffer = Buffer.from([
 				1, // request
-				identifier + 1,
+				currentIdentifier,
 				0, // length (1/2)
 				0, //  length (2/2)
 				msgType, // 1 = identity, 21 = EAP-TTLS, 2 = notificaiton, 4 = md5-challenge, 3 = NAK
@@ -81,15 +91,16 @@ export class EAPHandler {
 				buffer = Buffer.concat([buffer, length]);
 			}
 
-			const resBuffer = sslPart ? Buffer.concat([buffer, sslPart]) : buffer;
+			const resBuffer = dataPart ? Buffer.concat([buffer, dataPart]) : buffer;
 			resBuffer.writeUInt16BE(resBuffer.byteLength, 2);
 
-			console.log('EAP RESPONSE', {
+			console.log('<<<<<<<<<<<< EAP RESPONSE TO CLIENT', {
 				code: 1,
-				identifier: identifier + 1,
-				length: (includeLength && data && data.byteLength) || 0,
-				msgType,
-				flags,
+				currentIdentifier,
+				includeLength,
+				length: (data && data.byteLength) || 0,
+				msgType: msgType.toString(10),
+				flags: `00000000${flags.toString(2)}`.substr(-8),
 				data
 			});
 
@@ -98,13 +109,14 @@ export class EAPHandler {
 			// buffer.writeInt8(21, 4); // eap-ttls
 			// buffer.writeInt8(0, 5); // flags
 
-			/*
-            @todo: this is wrong,
-            if there are more messages, add them to a queue
-            and process the next one when client has ack. (message without data)
-             */
-			response(resBuffer);
-		} while (data && i * maxFragmentSize < data.length);
+			console.log('sending message with identifier', currentIdentifier);
+			({ identifier: currentIdentifier, response: currentResponse } = await currentResponse(
+				resBuffer
+			));
+			console.log('next message got identifier', currentIdentifier);
+		} while (data && sentDataSize < data.length);
+
+		console.log('DONE', sentDataSize, data && data.length);
 	}
 
 	handleEAPMessage(msg: Buffer, state: string, handlers: IResponseHandlers) {
@@ -148,8 +160,7 @@ export class EAPHandler {
 						 Message Length         |             Data...
 						 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 						 */
-
-						console.log('RESPONDING WITH IDENTIDY / START');
+						console.log('>>>>>>>>>>>> REQUEST FROM CLIENT: IDENTIFY', {});
 
 						this.sendEAPResponse(handlers.response, identifier, undefined, 21, 0x20);
 
@@ -167,14 +178,17 @@ export class EAPHandler {
 						break;
 					case 21: // EAP TTLS
 						this.eapTTLS.handleMessage(msg, state, handlers, identifier);
-						return;
+						break;
 					case 3: // nak
-						this.sendEAPResponse(handlers.response, identifier, undefined, 3);
+						// this.sendEAPResponse(handlers.response, identifier, undefined, 3);
 						break;
 					case 2: // notification
+						console.log('>>>>>>>>>>>> REQUEST FROM CLIENT: notification', {});
 						console.info('notification');
 						break;
 					case 4: // md5-challenge
+						console.log('>>>>>>>>>>>> REQUEST FROM CLIENT: md5-challenge', {});
+
 						console.info('md5-challenge');
 						break;
 					case 254: // expanded type
@@ -183,7 +197,11 @@ export class EAPHandler {
 						break;
 
 					default:
-						console.error('unsupported type', type);
+						// we do not support this auth type, ask for TTLS
+						console.error('unsupported type', type, 'requesting TTLS (21)');
+
+						this.sendEAPResponse(handlers.response, identifier, Buffer.from([21]), 3);
+
 						break;
 				}
 				break;

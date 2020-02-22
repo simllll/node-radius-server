@@ -1,6 +1,8 @@
 import { RadiusPacket } from 'radius';
 
-export type ResponseHandler = (msg: Buffer) => void;
+export type ResponseHandler = (
+	msg: Buffer
+) => Promise<{ identifier: number; response: ResponseHandler }>;
 export type ResponseAuthHandler = (
 	username: string,
 	password: string,
