@@ -19,20 +19,46 @@ module.exports = {
 		]
 	},
 
-	// authentication
-	authentication: 'ldap',
+	// GoogleLDAPAuth (optimized for google auth)
+	authentication: 'GoogleLDAPAuth',
 	authenticationOptions: {
-		url: 'ldap://127.0.0.1:1636',
 		base: 'dc=hokify,dc=com',
-		tlsOptions2: {
+		tlsOptions: {
 			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
-			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt'),
-
-			// This is necessary only if using the client certificate authentication.
-			requestCert: true,
-
-			// This is necessary only if the client uses the self-signed certificate.
-			ca: [fs.readFileSync('ldap.gsuite.hokify.com.40567.key')]
+			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt')
 		}
 	}
+
+	/** LDAP AUTH 
+	authentication: 'LDAPAuth',
+	authenticationOptions: {
+		url: 'ldaps://ldap.google.com',
+		base: 'dc=hokify,dc=com',
+		tlsOptions: {
+			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
+			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt'),
+			servername: 'ldap.google.com'
+		}
+	}
+	*/
+
+	/** IMAP AUTH 
+	authentication: 'IMAPAuth',
+	authenticationOptions: {
+		host: 'imap.gmail.com',
+		port: 993,
+		useSecureTransport: true,
+		validHosts: ['hokify.com']
+	}
+	 */
+
+	/** SMTP AUTH 
+	authentication: 'IMAPAuth',
+	authenticationOptions: {
+		host: 'smtp.gmail.com',
+		port: 465,
+		useSecureTransport: true,
+		validHosts: ['gmail.com']
+	}
+	 */
 };

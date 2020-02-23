@@ -14,6 +14,33 @@ This is a first implementation draft, which is currently only working with a nod
 
 CONTRIBUTIONS WELCOME! If you are willing to help, just open a PR or contact me via bug system or simon.tretter@hokify.com.
 
+## Motivation
+
+### Why not Freeradius?
+
+There are several reasons why I started implementing this radius server in node js. We are using
+freeradius right now, but have several issues which are hard to tackle due to the reason that freeradius
+is a complex software and supports many uses cases. It is also written in C++ and uses threads behind the scene.
+Therefore it's not easy to extend or modify it, or even bring new feature in.
+The idea of this project is to make a super simple node radius server, which is async by default. No complex
+thread handling, no other fancy thing. The basic goal is to make WPA2 authenticiation easy again.
+
+### 802.11x protocol in node
+
+Another motivation is that it is very exciting to see how wireless protocols have evolved, and see
+how a implementation like TTLS works.
+
+### Few alternatives (only non-free ones like Jumpcloud...)
+
+Furthermore there are few alternatives out there, e.g. jumpcloud is non-free and I couldn't find many others.
+
+### Vision
+
+As soon as I understood the TTLS PAP Tunnel approach, I had this vision of making Wlan Authentification easy
+for everyone. Why limit it to something "complex" like LDAP and co. This library aims to make it easy for everyone
+to implement either their own authentication mechanismus (e.g. against a database), or provides some mechansimns
+out of the box (e.g. imap, static, ldap,..).
+
 ## Installation
 
     npm install
@@ -28,7 +55,7 @@ you need:
 2.  Optional: Create your own SSL certificate (e.g. self signed via npm run create-certificate)
 3.  Check config.js and adapt to your needs
 
-- configure authentication (passport config), e.g. for LDAP
+- configure authentication e.g. for LDAP
 
 ```js
 var config = {
@@ -46,15 +73,86 @@ var config = {
 4.  Install und build server: npm install && npm run build
 5.  Start server "npm run start"
 
-## Authentications
+## Configuration
 
-right now only one simple ldap implementation is done,
-the idea is though to use [passport.js](http://www.passportjs.org/) as authentication provider,
-therefore it would be possible to use the radius server with your email provider authentication or any
-other auth mechanismus you use (well everything with no 2factor or anything else that requries an extra step).
+see config.js in root
+
+
+
+### Authentications
+
+#### Google LDAP
+
+google ldap optimized authenticiation implementaiton
+
+#### LDAP
+
+ldap authentication
+
+```typescript
+interface ILDAPAuthOptions {
+	/** ldap url
+	 * e.g. ldaps://ldap.google.com
+	 */
+	url: string;
+	/** base DN
+	 *  e.g. 'dc=hokify,dc=com', */
+	base: string;
+	/** tls options
+	 * e.g. {
+			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
+			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt'),
+			servername: 'ldap.google.com'
+		} */
+	tlsOptions?: any;
+	/**
+	 * searchFilter
+	 */
+	searchFilter?: string;
+}
+```
+
+#### IMAP
+
+imap authenticiation
+
+```typescript
+interface IIMAPAuthOptions {
+	host: string;
+	port?: number;
+	useSecureTransport?: boolean;
+	validHosts?: string[];
+}
+```
+
+#### SMTP
+
+smtp authenticiation
+
+```typescript
+interface ISMTPAuthOptions {
+	host: string;
+	port?: number;
+	useSecureTransport?: boolean;
+	validHosts?: string[];
+}
+```
+
+#### Static Auth
+
+static authenticiation
+
+```typescript
+interface IStaticAuthOtions {
+	validCrentials: {
+		username: string;
+		password: string;
+	}[];
+}
+```
 
 ## Usage
 
-You need to specify at least a radius password and the base DN for LDAP:
+Ensure you have installed latest node version and run:
 
     npm run start

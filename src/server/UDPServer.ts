@@ -38,7 +38,7 @@ export class UDPServer extends events.EventEmitter implements IServer {
 
 			// retry up to MAX_RETRIES to send this message,
 			// we automatically retry if there is no confirmation (=any incoming message from client)
-			// if expectAcknowledgment (e.g. Access-Accept or Access-Reject) is set, we do not retry
+			// if expectAcknowledgment is false (e.g. Access-Accept or Access-Reject), we do not retry
 			const identifierForRetry = `${address}:${port}`;
 			if (expectAcknowledgment && retried < UDPServer.MAX_RETRIES) {
 				this.timeout[identifierForRetry] = setTimeout(sendResponse, 600 * (retried + 1));

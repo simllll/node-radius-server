@@ -1,3 +1,6 @@
+// https://tools.ietf.org/html/rfc5281 TTLS v0
+// https://tools.ietf.org/html/draft-funk-eap-ttls-v1-00 TTLS v1 (not implemented)
+
 /* eslint-disable no-bitwise */
 import * as tls from 'tls';
 import * as NodeCache from 'node-cache';

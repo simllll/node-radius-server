@@ -1,24 +1,32 @@
-import { GoogleLDAPAuth } from './auth/google-ldap';
 import { UDPServer } from './server/UDPServer';
 import { RadiusService } from './radius/RadiusService';
 
 import * as config from '../config';
+import { Authentication } from './auth';
+import { IAuthentication } from './types/Authentication';
 
 console.log(`Listener Port: ${config.port || 1812}`);
 console.log(`RADIUS Secret: ${config.secret}`);
 console.log(`Auth Mode: ${config.authentication}`);
 
-// const ldap = new LDAPAuth({url: 'ldap://ldap.google.com', base: 'dc=hokify,dc=com', uid: 'uid', tlsOptions});
-
-const ldap = new GoogleLDAPAuth(
-	config.authenticationOptions.url,
-	config.authenticationOptions.base
-);
-
-const server = new UDPServer(config.port);
-const radiusService = new RadiusService(config.secret, ldap);
-
 (async () => {
+	/* configure auth mechansim */
+	let auth: IAuthentication;
+	try {
+		const AuthMechanismus = (await import(`./auth/${config.authentication}`))[
+			config.authentication
+		];
+		auth = new AuthMechanismus(config.authenticationOptions);
+	} catch (err) {
+		console.error('cannot load auth mechanismus', config.authentication);
+		throw err;
+	}
+	// start radius server
+	const authentication = new Authentication(auth);
+
+	const server = new UDPServer(config.port);
+	const radiusService = new RadiusService(config.secret, authentication);
+
 	server.on('message', async (msg, rinfo) => {
 		const response = await radiusService.handleMessage(msg);
 

@@ -1,26 +1,45 @@
-import * as NodeCache from 'node-cache';
-
 import { Client, createClient } from 'ldapjs';
 import debug from 'debug';
+import * as tls from 'tls';
 import { IAuthentication } from '../types/Authentication';
 
 const usernameFields = ['posixUid', 'mail'];
 
-const log = debug('radius:auth:ldap');
+const log = debug('radius:auth:google-ldap');
 // TLS:
 // https://github.com/ldapjs/node-ldapjs/issues/307
 
+interface IGoogleLDAPAuthOptions {
+	/** base DN
+	 *  e.g. 'dc=hokify,dc=com', */
+	base: string;
+	/** tls options
+	 * e.g. {
+			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
+			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt')
+		} */
+	tlsOptions: tls.TlsOptions;
+}
+
 export class GoogleLDAPAuth implements IAuthentication {
-	cache = new NodeCache();
+	private ldap: Client;
 
-	ldap: Client;
+	private lastDNsFetch: Date;
 
-	lastDNsFetch: Date;
+	private allValidDNsCache: { [key: string]: string };
 
-	allValidDNsCache: { [key: string]: string };
+	private base: string;
 
-	constructor(private url: string, private base: string, tlsOptions?) {
-		this.ldap = createClient({ url, tlsOptions }).on('error', error => {
+	constructor(config: IGoogleLDAPAuthOptions) {
+		this.base = config.base;
+
+		this.ldap = createClient({
+			url: 'ldaps://ldap.google.com:636',
+			tlsOptions: {
+				...config.tlsOptions,
+				servername: 'ldap.google.com'
+			}
+		}).on('error', error => {
 			console.error('Error in ldap', error);
 		});
 
@@ -74,12 +93,6 @@ export class GoogleLDAPAuth implements IAuthentication {
 	}
 
 	async authenticate(username: string, password: string, count = 0, forceFetching = false) {
-		const cacheKey = `usr:${username}|pwd:${password}`;
-		const fromCache = this.cache.get(cacheKey);
-		if (fromCache !== undefined) {
-			return fromCache;
-		}
-
 		const cacheValidTime = new Date();
 		cacheValidTime.setHours(cacheValidTime.getHours() - 12);
 
@@ -100,14 +113,14 @@ export class GoogleLDAPAuth implements IAuthentication {
 			if (!dnsFetched && !forceFetching) {
 				return this.authenticate(username, password, count, true);
 			}
-			console.error(`invalid username, not found in DN: ${username}`);
+			console.error(`invalid username, not found in DN: ${username}`, this.allValidDNsCache);
 			return false;
 		}
 
 		const authResult: boolean = await new Promise((resolve, reject) => {
 			this.ldap.bind(dn, password, (err, res) => {
 				if (err) {
-					if (err && (err as any).stack && (err as any).stack.includes(`${this.url} closed`)) {
+					if (err && (err as any).stack && (err as any).stack.includes(`ldap.google.com closed`)) {
 						count++;
 						// wait 1 second to give the ldap error handler time to reconnect
 						setTimeout(() => resolve(this.authenticate(dn, password)), 2000);
@@ -123,8 +136,6 @@ export class GoogleLDAPAuth implements IAuthentication {
 			});
 		});
 
-		this.cache.set(cacheKey, authResult, 86400);
-
-		return authResult;
+		return !!authResult;
 	}
 }
