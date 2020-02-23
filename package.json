@@ -7,7 +7,8 @@
 		"start": "../node/node dist/app.js",
 		"build": "tsc",
 		"dev": "ts-node src/app.ts",
-		"test-ttls-pap": "eapol_test -c ./ttls-pap.conf -s testing123",
+		"test-ttls-pap": "tests/eapol_test -c tests/ttls-pap.conf -s testing123",
+		"test-radtest": "radtest -x user pwd localhost 1812 testing123",
 		"create-certificate": "sh ./ssl/create.sh && sh ./ssl/sign.sh"
 	},
 	"dependencies": {

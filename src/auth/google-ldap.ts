@@ -76,7 +76,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 	async authenticate(username: string, password: string, count = 0, forceFetching = false) {
 		const cacheKey = `usr:${username}|pwd:${password}`;
 		const fromCache = this.cache.get(cacheKey);
-		if (fromCache) {
+		if (fromCache !== undefined) {
 			return fromCache;
 		}
 
@@ -100,10 +100,11 @@ export class GoogleLDAPAuth implements IAuthentication {
 			if (!dnsFetched && !forceFetching) {
 				return this.authenticate(username, password, count, true);
 			}
-			throw new Error(`invalid username, not found in DN: ${username}`);
+			console.error(`invalid username, not found in DN: ${username}`);
+			return false;
 		}
 
-		await new Promise((resolve, reject) => {
+		const authResult: boolean = await new Promise((resolve, reject) => {
 			this.ldap.bind(dn, password, (err, res) => {
 				if (err) {
 					if (err && (err as any).stack && (err as any).stack.includes(`${this.url} closed`)) {
@@ -112,16 +113,18 @@ export class GoogleLDAPAuth implements IAuthentication {
 						setTimeout(() => resolve(this.authenticate(dn, password)), 2000);
 						return;
 					}
-					console.error('ldap error', err);
-					reject(err);
+
+					resolve(false);
+					// console.error('ldap error', err);
+					// reject(err);
 				}
 				if (res) resolve(res);
 				else reject();
 			});
 		});
 
-		this.cache.set(cacheKey, true, 86400);
+		this.cache.set(cacheKey, authResult, 86400);
 
-		return username;
+		return authResult;
 	}
 }
