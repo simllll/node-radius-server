@@ -12,7 +12,7 @@ describe('test ldap auth', function() {
 			tlsOptions: {
 				servername: 'ldap.google.com',
 				key: fs.readFileSync('./ldap.gsuite.hokify.com.40567.key'),
-				cert: fs.readFileSync('./ldap.gsuite.hokify.com.40567.crt'),
+				cert: fs.readFileSync('./ldap.gsuite.hokify.com.40567.crt')
 			}
 		});
 

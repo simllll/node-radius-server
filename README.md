@@ -56,7 +56,7 @@ you need:
 3.  Check config.js and adapt to your needs
 
 - configure authentication:
-set authenticaiton to one of the provided authenticators.
+  set authenticaiton to one of the provided authenticators.
 
 ```js
 var config = {
@@ -76,8 +76,6 @@ var config = {
 ## Configuration
 
 see config.js in root
-
-
 
 ### Authentications
 
@@ -100,6 +98,7 @@ interface IGoogleLDAPAuthOptions {
 ```
 
 Example
+
 ```js
 c = {
 	// GoogleLDAPAuth (optimized for google auth)
@@ -111,7 +110,7 @@ c = {
 			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt')
 		}
 	}
-}
+};
 ```
 
 #### LDAP
@@ -142,6 +141,7 @@ interface ILDAPAuthOptions {
 ```
 
 Example
+
 ```js
 c = {
 	authentication: 'LDAPAuth',
@@ -154,7 +154,7 @@ c = {
 			servername: 'ldap.google.com'
 		}
 	}
-}
+};
 ```
 
 #### IMAP
@@ -171,6 +171,7 @@ interface IIMAPAuthOptions {
 ```
 
 Example
+
 ```js
 c = {
 	authentication: 'IMAPAuth',
@@ -180,7 +181,7 @@ c = {
 		useSecureTransport: true,
 		validHosts: ['hokify.com']
 	}
-	}
+};
 ```
 
 #### SMTP
@@ -197,6 +198,7 @@ interface ISMTPAuthOptions {
 ```
 
 Example
+
 ```js
 c = {
 	authentication: 'IMAPAuth',
@@ -206,7 +208,7 @@ c = {
 		useSecureTransport: true,
 		validHosts: ['gmail.com']
 	}
-}
+};
 ```
 
 #### Static Auth
@@ -223,17 +225,18 @@ interface IStaticAuthOtions {
 ```
 
 Example
+
 ```js
 c = {
 	authentication: 'StaticAuth',
 	authenticationOptions: {
 		validCredentials: [
-            { username: 'test', password: 'pwd' },
-            { username: 'user1', password: 'password' },
-            { username: 'admin', password: 'cool' }
-      ]
+			{ username: 'test', password: 'pwd' },
+			{ username: 'user1', password: 'password' },
+			{ username: 'admin', password: 'cool' }
+		]
 	}
-}
+};
 ```
 
 ## Usage
