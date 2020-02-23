@@ -55,14 +55,14 @@ you need:
 2.  Optional: Create your own SSL certificate (e.g. self signed via npm run create-certificate)
 3.  Check config.js and adapt to your needs
 
-- configure authentication e.g. for LDAP
+- configure authentication:
+set authenticaiton to one of the provided authenticators.
 
 ```js
 var config = {
 	// ....
-	authentication: 'ldap',
+	authentication: 'GoogleLDAPAuth',
 	authenticationOptions: {
-		url: 'ldap://127.0.0.1:1636',
 		base: 'dc=hokify,dc=com'
 	}
 };
@@ -84,6 +84,20 @@ see config.js in root
 #### Google LDAP
 
 google ldap optimized authenticiation implementaiton
+
+```typescript
+interface IGoogleLDAPAuthOptions {
+	/** base DN
+	 *  e.g. 'dc=hokify,dc=com', */
+	base: string;
+	/** tls options
+	 * e.g. {
+			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
+			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt')
+		} */
+	tlsOptions: tls.TlsOptions;
+}
+```
 
 #### LDAP
 
