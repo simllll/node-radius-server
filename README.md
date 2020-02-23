@@ -99,6 +99,21 @@ interface IGoogleLDAPAuthOptions {
 }
 ```
 
+Example
+```js
+c = {
+	// GoogleLDAPAuth (optimized for google auth)
+	authentication: 'GoogleLDAPAuth',
+	authenticationOptions: {
+		base: 'dc=hokify,dc=com',
+		tlsOptions: {
+			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
+			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt')
+		}
+	}
+}
+```
+
 #### LDAP
 
 ldap authentication
@@ -126,6 +141,22 @@ interface ILDAPAuthOptions {
 }
 ```
 
+Example
+```js
+c = {
+	authentication: 'LDAPAuth',
+	authenticationOptions: {
+		url: 'ldaps://ldap.google.com',
+		base: 'dc=hokify,dc=com',
+		tlsOptions: {
+			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
+			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt'),
+			servername: 'ldap.google.com'
+		}
+	}
+}
+```
+
 #### IMAP
 
 imap authenticiation
@@ -139,6 +170,19 @@ interface IIMAPAuthOptions {
 }
 ```
 
+Example
+```js
+c = {
+	authentication: 'IMAPAuth',
+	authenticationOptions: {
+		host: 'imap.gmail.com',
+		port: 993,
+		useSecureTransport: true,
+		validHosts: ['hokify.com']
+	}
+	}
+```
+
 #### SMTP
 
 smtp authenticiation
@@ -149,6 +193,19 @@ interface ISMTPAuthOptions {
 	port?: number;
 	useSecureTransport?: boolean;
 	validHosts?: string[];
+}
+```
+
+Example
+```js
+c = {
+	authentication: 'IMAPAuth',
+	authenticationOptions: {
+		host: 'smtp.gmail.com',
+		port: 465,
+		useSecureTransport: true,
+		validHosts: ['gmail.com']
+	}
 }
 ```
 
@@ -165,8 +222,22 @@ interface IStaticAuthOtions {
 }
 ```
 
+Example
+```js
+c = {
+	authentication: 'StaticAuth',
+	authenticationOptions: {
+		validCredentials: [
+            { username: 'test', password: 'pwd' },
+            { username: 'user1', password: 'password' },
+            { username: 'admin', password: 'cool' }
+      ]
+	}
+}
+```
+
 ## Usage
 
-Ensure you have installed latest node version and run:
+Ensure you have installed latest nightly node version and run:
 
     npm run start
