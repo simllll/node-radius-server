@@ -4,7 +4,7 @@ import { IPacketHandlerResult } from './PacketHandler';
 export interface IEAPMethod {
 	getEAPType(): number;
 
-	identify(identifier: number, stateID: string): IPacketHandlerResult;
+	identify(identifier: number, stateID: string, msg?: Buffer): IPacketHandlerResult;
 
 	handleMessage(
 		identifier: number,

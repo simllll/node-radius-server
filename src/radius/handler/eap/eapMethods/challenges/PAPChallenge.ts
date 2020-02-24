@@ -1,5 +1,5 @@
 import debug from 'debug';
-import { IEAPChallenge } from '../../../../types/EAPChallenge';
+import { IEAPChallenge } from '../../../../../types/EAPChallenge';
 
 const log = debug('radius:eap:papchallenge');
 

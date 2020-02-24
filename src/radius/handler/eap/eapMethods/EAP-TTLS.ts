@@ -1,19 +1,20 @@
 // https://tools.ietf.org/html/rfc5281 TTLS v0
 // https://tools.ietf.org/html/draft-funk-eap-ttls-v1-00 TTLS v1 (not implemented)
-
 /* eslint-disable no-bitwise */
 import * as tls from 'tls';
 import * as NodeCache from 'node-cache';
 import { RadiusPacket } from 'radius';
 import debug from 'debug';
-import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../tls/crypt';
-import { ResponseAuthHandler } from '../../../types/Handler';
+import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../../tls/crypt';
+import { ResponseAuthHandler } from '../../../../types/Handler';
 import { PAPChallenge } from './challenges/PAPChallenge';
-import { IPacketHandlerResult, PacketResponseCode } from '../../../types/PacketHandler';
-import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../helpers';
-import { IEAPMethod } from '../../../types/EAPMethod';
-import { IAuthentication } from '../../../types/Authentication';
-import { secret } from '../../../../config';
+import { IPacketHandlerResult, PacketResponseCode } from '../../../../types/PacketHandler';
+import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../../helpers';
+import { IEAPMethod } from '../../../../types/EAPMethod';
+import { IAuthentication } from '../../../../types/Authentication';
+import { secret } from '../../../../../config';
+import { EAPPacketHandler } from '../../EAPPacketHandler';
+import { EAPGTC } from './EAP-GTC';
 
 const log = debug('radius:eap:ttls');
 
@@ -38,6 +39,9 @@ export class EAPTTLS implements IEAPMethod {
 
 	private openTLSSockets = new NodeCache({ useClones: false, stdTTL: 3600 }); // keep sockets for about one hour
 
+	// EAP TUNNEL
+	tunnelEAP = new EAPPacketHandler([new EAPGTC(this.authentication)]); // tunnel with GTC support
+
 	getEAPType(): number {
 		return 21;
 	}
@@ -48,23 +52,23 @@ export class EAPTTLS implements IEAPMethod {
 
 	constructor(private authentication: IAuthentication) {}
 
-	private buildEAPTTLSResponse(
+	private buildEAPTTLS(
 		identifier: number,
 		msgType = 21,
 		msgFlags = 0x00,
 		stateID: string,
 		data?: Buffer,
-		newResponse = true
-	): IPacketHandlerResult {
-		const maxSize = (MAX_RADIUS_ATTRIBUTE_SIZE - 5) * 4;
+		newResponse = true,
+		maxSize = (MAX_RADIUS_ATTRIBUTE_SIZE - 5) * 4
+	): Buffer {
 		log('maxSize', maxSize);
 
 		/* it's the first one and we have more, therefore include length */
-		const includeLength = data && newResponse && data.length > maxSize;
+		const includeLength = maxSize > 0 && data && newResponse && data.length > maxSize;
 
 		// extract data party
-		const dataToSend = data && data.length > 0 && data.slice(0, maxSize);
-		const dataToQueue = data && data.length > maxSize && data.slice(maxSize);
+		const dataToSend = maxSize > 0 ? data && data.length > 0 && data.slice(0, maxSize) : data;
+		const dataToQueue = maxSize > 0 && data && data.length > maxSize && data.slice(maxSize);
 
 		/*
 			0 1 2 3 4 5 6 7 8
@@ -129,6 +133,19 @@ export class EAPTTLS implements IEAPMethod {
 			this.queueData.del(stateID);
 		}
 
+		return resBuffer;
+	}
+
+	private buildEAPTTLSResponse(
+		identifier: number,
+		msgType = 21,
+		msgFlags = 0x00,
+		stateID: string,
+		data?: Buffer,
+		newResponse = true
+	): IPacketHandlerResult {
+		const resBuffer = this.buildEAPTTLS(identifier, msgType, msgFlags, stateID, data, newResponse);
+
 		const attributes: any = [['State', Buffer.from(stateID)]];
 		let sentDataSize = 0;
 		do {
@@ -162,7 +179,7 @@ export class EAPTTLS implements IEAPMethod {
 		 Message Length         |             Data...
 		 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 		 */
-
+		const identifier = msg.slice(1, 2).readUInt8(0);
 		const flags = msg.slice(5, 6).readUInt8(0); // .toString('hex');
 		/*
 			0   1   2   3   4   5   6   7
@@ -191,9 +208,18 @@ export class EAPTTLS implements IEAPMethod {
 
 		let msglength;
 		if (decodedFlags.lengthIncluded) {
-			msglength = msg.slice(6, 10).readInt32BE(0); // .readDoubleLE(0); // .toString('hex');
+			msglength = msg.slice(6, 10).readUInt32BE(0); // .readDoubleLE(0); // .toString('hex');
 		}
 		const data = msg.slice(decodedFlags.lengthIncluded ? 10 : 6, msg.length);
+
+		log('>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS', {
+			flags: `00000000${flags.toString(2)}`.substr(-8),
+			decodedFlags,
+			identifier,
+			msglength,
+			data
+			// dataStr: data.toString()
+		});
 
 		return {
 			decodedFlags,
@@ -255,13 +281,10 @@ export class EAPTTLS implements IEAPMethod {
 		msg: Buffer,
 		orgRadiusPacket: RadiusPacket
 	): Promise<IPacketHandlerResult> {
-		const { decodedFlags, msglength, data } = this.decodeTTLSMessage(msg);
+		const { data } = this.decodeTTLSMessage(msg);
 
 		// check if no data package is there and we have something in the queue, if so.. empty the queue first
 		if (!data || data.length === 0) {
-			log(
-				`>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS, ACK / NACK (no data, just a confirmation, ID: ${identifier})`
-			);
 			const queuedData = this.queueData.get(stateID);
 			if (queuedData instanceof Buffer && queuedData.length > 0) {
 				return this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, queuedData, false);
@@ -269,15 +292,6 @@ export class EAPTTLS implements IEAPMethod {
 
 			return {};
 		}
-
-		log('>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS', {
-			// flags: `00000000${flags.toString(2)}`.substr(-8),
-			decodedFlags,
-			identifier,
-			msglength
-			// data,
-			// dataStr: data.toString()
-		});
 
 		let connection = this.openTLSSockets.get(stateID) as ITLSServer;
 
@@ -295,11 +309,18 @@ export class EAPTTLS implements IEAPMethod {
 		const sendResponsePromise = newDeferredPromise();
 
 		const incomingMessageHandler = async (incomingData: Buffer) => {
-			const type = incomingData.slice(3, 4).readUInt8(0);
+			const ret: any = {};
+			ret.attributes = {};
+			ret.raw_attributes = [];
+
+			const { type, data: AVPdata, length: AVPlength } = this.decodeAVP(incomingData);
+
+			console.log('AVP data', { AVPdata, AVPlength, AVPdataStr: AVPdata.toString() });
+
 			// const code = data.slice(4, 5).readUInt8(0);
 
 			switch (type) {
-				case 1: // PAP / CHAP
+				case 1: // PAP
 					try {
 						const { username, password } = this.papChallenge.decode(incomingData);
 						const authResult = await this.authentication.authenticate(username, password);
@@ -315,17 +336,51 @@ export class EAPTTLS implements IEAPMethod {
 						sendResponsePromise.resolve(this.buildEAPTTLSResponse(identifier, 3, 0, stateID));
 					}
 					break;
-				default:
+				case 79: {
+					const result = await this.tunnelEAP.handlePacket(
+						{
+							State: `${stateID}-inner`,
+							'EAP-Message': AVPdata
+						},
+						orgRadiusPacket
+					);
+
+					log('inner tunnel result', result);
+
+					if (
+						result.code === PacketResponseCode.AccessReject ||
+						result.code === PacketResponseCode.AccessAccept
+					) {
+						sendResponsePromise.resolve(
+							this.authResponse(
+								identifier,
+								result.code === PacketResponseCode.AccessAccept,
+								connection.tls,
+								orgRadiusPacket
+							)
+						);
+						return;
+					}
+
+					const eapMessage = result.attributes?.find(attr => attr[0] === 'EAP-Message');
+					if (!eapMessage) {
+						throw new Error('no eap message found');
+					}
+
+					connection.events.emit('encrypt', this.buildAVP(79, eapMessage[1]));
+					break;
+				}
+				default: {
 					log('data', incomingData);
 					log('data str', incomingData.toString());
 
-					// currentConnection!.events.emit('end');
+					log('UNSUPPORTED AUTH TYPE, requesting identify again (we need PAP!)', type);
 
-					log('UNSUPPORTED AUTH TYPE, requesting PAP');
-					// throw new Error(`unsupported auth type${type}`);
-					sendResponsePromise.resolve(
-						this.buildEAPTTLSResponse(identifier, 3, 0, stateID, Buffer.from([1]))
+					connection.events.emit(
+						'encrypt',
+						this.buildAVP(79, this.buildEAPTTLS(identifier, 3, 0, stateID, Buffer.from([1])))
 					);
+				}
 			}
 		};
 
@@ -341,7 +396,7 @@ export class EAPTTLS implements IEAPMethod {
 		connection.events.on('response', responseHandler);
 
 		// emit data to tls server
-		connection.events.emit('send', data);
+		connection.events.emit('decrypt', data);
 		const responseData = await sendResponsePromise.promise;
 
 		// cleanup
@@ -350,5 +405,115 @@ export class EAPTTLS implements IEAPMethod {
 
 		// send response
 		return responseData; // this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData);
+	}
+
+	private decodeAVP(buffer: Buffer) {
+		/**
+		 * 4.1.  AVP Header
+
+						 The fields in the AVP header MUST be sent in network byte order.  The
+						 format of the header is:
+
+							0                   1                   2                   3
+							0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+						 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+						 |                           AVP Code                            |
+						 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+						 |V M P r r r r r|                  AVP Length                   |
+						 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+						 |                        Vendor-ID (opt)                        |
+						 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+						 |    Data ...
+						 +-+-+-+-+-+-+-+-+
+		 */
+		const type = buffer.slice(0, 4).readUInt32BE(0);
+		const flags = buffer.slice(4, 5).readUInt8(0);
+		const decodedFlags = {
+			// L
+			V: !!(flags & 0b10000000),
+			// M
+			M: !!(flags & 0b01000000)
+		};
+
+		// const length = buffer.slice(5, 8).readUInt16BE(0); // actually a Int24BE
+		const length = buffer.slice(6, 8).readUInt16BE(0); // actually a Int24BE
+
+		let vendorId;
+		let data;
+		if (flags & 0b010000000) {
+			// V flag set
+			vendorId = buffer.slice(8, 12).readUInt32BE(0);
+			data = buffer.slice(8, 12);
+		} else {
+			data = buffer.slice(8);
+		}
+
+		return {
+			type,
+			flags: `00000000${flags.toString(2)}`.substr(-8),
+			decodedFlags,
+			length,
+			vendorId,
+			data
+		};
+	}
+
+	private buildAVP(
+		code: number,
+		data: Buffer,
+		flags: { VendorSpecific?: boolean; Mandatory?: boolean } = { Mandatory: true }
+	) {
+		/**
+		 * 4.1.  AVP Header
+
+						 The fields in the AVP header MUST be sent in network byte order.  The
+						 format of the header is:
+
+							0                   1                   2                   3
+							0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+						 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+						 |                           AVP Code                            |
+						 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+						 |V M r r r r r r|                  AVP Length                   |
+						 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+						 |                        Vendor-ID (opt)                        |
+						 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+						 |    Data ...
+						 +-+-+-+-+-+-+-+-+
+		 */
+		let b = Buffer.alloc(8);
+
+		b.writeInt32BE(code, 0); // EAP-Message
+		/**
+		 * The 'V' (Vendor-Specific) bit indicates whether the optional
+      Vendor-ID field is present.  When set to 1, the Vendor-ID field is
+      present and the AVP Code is interpreted according to the namespace
+      defined by the vendor indicated in the Vendor-ID field.
+
+      The 'M' (Mandatory) bit indicates whether support of the AVP is
+      required.  If this bit is set to 0, this indicates that the AVP
+      may be safely ignored if the receiving party does not understand
+      or support it.  If set to 1, this indicates that the receiving
+      party MUST fail the negotiation if it does not understand the AVP;
+      for a TTLS server, this would imply returning EAP-Failure, for a
+      client, this would imply abandoning the negotiation.
+		 */
+		let flagValue = 0;
+		if (flags.VendorSpecific) {
+			flagValue += 0b10000000;
+		}
+		if (flags.Mandatory) {
+			flagValue += 0b01000000;
+		}
+
+		console.log('flagValue', flagValue, `00000000${flagValue.toString(2)}`.substr(-8));
+
+		b.writeInt8(flagValue, 4); // flags (set V..)
+
+		b = Buffer.concat([b, data]); // , Buffer.from('\0')]);
+
+		b.writeInt16BE(b.byteLength, 6); // write size (actually we would need a Int24BE here, but it is good to go with 16bits)
+
+		return b;
 	}
 }

@@ -4,11 +4,21 @@ import { EAPPacketHandler } from './handler/EAPPacketHandler';
 import { DefaultPacketHandler } from './handler/DefaultPacketHandler';
 import { IPacketHandler, IPacketHandlerResult, PacketResponseCode } from '../types/PacketHandler';
 
+import { EAPTTLS } from './handler/eap/eapMethods/EAP-TTLS';
+import { EAPMD5 } from './handler/eap/eapMethods/EAP-MD5';
+import { EAPGTC } from './handler/eap/eapMethods/EAP-GTC';
+
 export class RadiusService {
 	radiusPacketHandlers: IPacketHandler[] = [];
 
 	constructor(private secret: string, private authentication: IAuthentication) {
-		this.radiusPacketHandlers.push(new EAPPacketHandler(authentication));
+		this.radiusPacketHandlers.push(
+			new EAPPacketHandler([
+				new EAPTTLS(authentication),
+				new EAPGTC(authentication),
+				new EAPMD5(authentication)
+			])
+		);
 		this.radiusPacketHandlers.push(new DefaultPacketHandler(authentication));
 	}
 

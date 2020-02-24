@@ -113,7 +113,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 			if (!dnsFetched && !forceFetching) {
 				return this.authenticate(username, password, count, true);
 			}
-			console.error(`invalid username, not found in DN: ${username}`, this.allValidDNsCache);
+			console.error(`invalid username, not found in DN: ${username}`); // , this.allValidDNsCache);
 			return false;
 		}
 

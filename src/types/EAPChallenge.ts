@@ -1,3 +1,3 @@
 export interface IEAPChallenge {
-	decode(data: Buffer): { username: string; password: string };
+	decode(data: Buffer, stateID: string): { username: string; password?: string };
 }

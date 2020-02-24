@@ -42,8 +42,13 @@ export function startTLSServer(): ITLSServer {
 	});
 	const encrypted = duplexpair.socket2;
 
-	emitter.on('send', (data: Buffer) => {
+	emitter.on('decrypt', (data: Buffer) => {
 		encrypted.write(data);
+		// encrypted.sync();
+	});
+
+	emitter.on('encrypt', (data: Buffer) => {
+		cleartext.write(data);
 		// encrypted.sync();
 	});
 

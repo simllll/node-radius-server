@@ -18,6 +18,7 @@ export class Authentication implements IAuthentication {
 		}
 
 		const authResult = await this.authenticator.authenticate(username, password);
+		console.log(`Auth Result for user ${username}`, authResult ? 'SUCCESS' : 'Failure');
 		this.cache.set(cacheKey, authResult, 86400); // cache for one day
 
 		return authResult;
