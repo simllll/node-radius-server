@@ -1,4 +1,4 @@
-import { Client, createClient } from 'ldapjs';
+import { Client, ClientOptions, createClient } from 'ldapjs';
 import debug from 'debug';
 import * as tls from 'tls';
 import { IAuthentication } from '../types/Authentication';
@@ -22,7 +22,7 @@ interface IGoogleLDAPAuthOptions {
 }
 
 export class GoogleLDAPAuth implements IAuthentication {
-	private ldap: Client;
+	private ldapDNClient: Client;
 
 	private lastDNsFetch: Date;
 
@@ -30,16 +30,20 @@ export class GoogleLDAPAuth implements IAuthentication {
 
 	private base: string;
 
+	private config: ClientOptions;
+
 	constructor(config: IGoogleLDAPAuthOptions) {
 		this.base = config.base;
 
-		this.ldap = createClient({
+		this.config = {
 			url: 'ldaps://ldap.google.com:636',
 			tlsOptions: {
 				...config.tlsOptions,
 				servername: 'ldap.google.com'
 			}
-		}).on('error', error => {
+		};
+
+		this.ldapDNClient = createClient(this.config).on('error', error => {
 			console.error('Error in ldap', error);
 		});
 
@@ -50,7 +54,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 		const dns: { [key: string]: string } = {};
 
 		await new Promise((resolve, reject) => {
-			this.ldap.search(
+			this.ldapDNClient.search(
 				this.base,
 				{
 					scope: 'sub'
@@ -118,7 +122,10 @@ export class GoogleLDAPAuth implements IAuthentication {
 		}
 
 		const authResult: boolean = await new Promise((resolve, reject) => {
-			this.ldap.bind(dn, password, (err, res) => {
+			// we never unbding a client, therefore create a new client every time
+			const authClient = createClient(this.config);
+
+			authClient.bind(dn, password, (err, res) => {
 				if (err) {
 					if (err && (err as any).stack && (err as any).stack.includes(`ldap.google.com closed`)) {
 						count++;
@@ -133,6 +140,8 @@ export class GoogleLDAPAuth implements IAuthentication {
 				}
 				if (res) resolve(res);
 				else reject();
+
+				authClient.unbind();
 			});
 		});
 
