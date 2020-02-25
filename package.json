@@ -2,6 +2,9 @@
 	"name": "radius-server",
 	"description": "radius server for google LDAP and TTLS",
 	"version": "0.0.1",
+	"engines": {
+		"node": ">13.9.x"
+	},
 	"scripts": {
 		"debug": "DEBUG=radius:* node dist/app.js",
 		"start": "node dist/app.js",
