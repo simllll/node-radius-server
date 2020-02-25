@@ -3,8 +3,8 @@
 	"description": "radius server for google LDAP and TTLS",
 	"version": "0.0.1",
 	"scripts": {
-		"debug": "DEBUG=radius:* ../node/node dist/app.js",
-		"start": "../node/node dist/app.js",
+		"debug": "DEBUG=radius:* node dist/app.js",
+		"start": "node dist/app.js",
 		"build": "tsc",
 		"dev": "ts-node src/app.ts",
 		"test": "mocha -r ts-node/register __tests__/**/*.test.ts",

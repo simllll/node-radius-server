@@ -4,10 +4,19 @@ import { RadiusService } from './radius/RadiusService';
 import * as config from '../config';
 import { Authentication } from './auth';
 import { IAuthentication } from './types/Authentication';
+import { startTLSServer } from './tls/crypt';
 
 console.log(`Listener Port: ${config.port || 1812}`);
 console.log(`RADIUS Secret: ${config.secret}`);
 console.log(`Auth Mode: ${config.authentication}`);
+
+/* test node version */
+const testSocket = startTLSServer();
+if (typeof (testSocket.tls as any).exportKeyingMaterial !== 'function') {
+	console.error('UNSUPPORTED NODE VERSION FOUND!!')
+	console.log('run "sudo npx n nightly" to get nightly build of node js.');
+	process.exit(-1);
+}
 
 (async () => {
 	/* configure auth mechansim */
