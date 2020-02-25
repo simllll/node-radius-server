@@ -5,12 +5,16 @@ Basic RADIUS Server for node.js for Google LDAP Service and WPA2 Enteprise WLAN 
 
 Protect your WIFI access with a username and password by a credential provider you already use!
 
+Authenticiation tested with Windows, Linux, Android and Apple devices.
+
 ## Known Issues / Disclaimer
 
-This is a first implementation draft, which is currently only working with a nodejs fork (see https://github.com/nodejs/node/pull/31814).
+This is a first implementation, which is currently only working with node js nightly (node 13+) (see https://github.com/nodejs/node/pull/31814).
 
-- PAP / CHAP RFC not found to implement this correctly
-- a lot of bugs
+- MD5 Challenge not implenented, but RFC says this is mandatory ;-)
+- Inner Tunnel does not act differently, even though spec says that EAP-message are not allowed to get fragmented,
+this is not a problem right now, as the messages of the inner tunnel are small enough, but it could be a bug in the future.
+ways to approach this: refactor that the inner tunnel can set max fragment size, or rebuild eap fragments in ttls after inner tunnel response
 
 CONTRIBUTIONS WELCOME! If you are willing to help, just open a PR or contact me via bug system or simon.tretter@hokify.com.
 

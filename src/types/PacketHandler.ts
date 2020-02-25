@@ -1,5 +1,3 @@
-import { RadiusPacket } from 'radius';
-
 export enum PacketResponseCode {
 	AccessChallenge = 'Access-Challenge',
 	AccessAccept = 'Access-Accept',
@@ -8,12 +6,19 @@ export enum PacketResponseCode {
 
 export interface IPacketHandlerResult {
 	code?: PacketResponseCode;
-	attributes?: [string, Buffer][];
+	attributes?: [string, Buffer | string][];
+}
+
+export interface IPacketAttributes {
+	[key: string]: string | Buffer;
+}
+
+export interface IPacket {
+	attributes: { [key: string]: string | Buffer };
+	authenticator?: Buffer;
 }
 
 export interface IPacketHandler {
-	handlePacket(
-		attributes: { [key: string]: Buffer },
-		orgRadiusPacket: RadiusPacket
-	): Promise<IPacketHandlerResult>;
+	/** handlingType is the attreibute ID of the currently processing type (e.g. TTLS, GTC, MD5,..) */
+	handlePacket(packet: IPacket, handlingType?: number): Promise<IPacketHandlerResult>;
 }

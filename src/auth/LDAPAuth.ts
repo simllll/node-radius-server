@@ -39,7 +39,6 @@ export class LDAPAuth implements IAuthentication {
 	}
 
 	async authenticate(username: string, password: string) {
-		// console.log('AUTH', this.ldap);
 		const authResult: boolean = await new Promise((resolve, reject) => {
 			this.ldap.authenticate(username, password, function(err, user) {
 				if (err) {

@@ -5,7 +5,6 @@ import * as crypto from 'crypto';
 import * as DuplexPair from 'native-duplexpair';
 import * as constants from 'constants';
 import debug from 'debug';
-import { makeid } from '../helpers';
 import * as config from '../../config';
 
 const log = debug('radius:tls');
@@ -136,11 +135,10 @@ export function encodeTunnelPW(key: Buffer, authenticator: Buffer, secret: strin
      contents of each Salt field in a given Access-Accept packet MUST
      be unique.
      */
-	const salt = Buffer.concat([
-		// eslint-disable-next-line no-bitwise
-		Buffer.from((Number(makeid(1)) & 0b10000000).toString()), // ensure left most bit is set (1)
-		Buffer.from(makeid(1))
-	]);
+	const salt = crypto.randomBytes(2);
+
+	// eslint-disable-next-line no-bitwise
+	salt[0] |= 0b10000000; // ensure leftmost bit is set to 1
 
 	/*
    String

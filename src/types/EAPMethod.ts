@@ -1,5 +1,4 @@
-import { RadiusPacket } from 'radius';
-import { IPacketHandlerResult } from './PacketHandler';
+import { IPacket, IPacketHandlerResult } from './PacketHandler';
 
 export interface IEAPMethod {
 	getEAPType(): number;
@@ -10,6 +9,7 @@ export interface IEAPMethod {
 		identifier: number,
 		stateID: string,
 		msg: Buffer,
-		orgRadiusPacket?: RadiusPacket
+		packet?: IPacket,
+		identity?: string
 	): Promise<IPacketHandlerResult>;
 }

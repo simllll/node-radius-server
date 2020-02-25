@@ -8,8 +8,6 @@ import { IPacketHandlerResult } from '../../../../types/PacketHandler';
 import { IEAPMethod } from '../../../../types/EAPMethod';
 import { IAuthentication } from '../../../../types/Authentication';
 
-const log = debug('radius:eap:md5');
-
 interface IEAPResponseHandlers {
 	response: (respData?: Buffer, msgType?: number) => void;
 	checkAuth: ResponseAuthHandler;
