@@ -3,15 +3,9 @@
 /* eslint-disable no-bitwise */
 import { RadiusPacket } from 'radius';
 import debug from 'debug';
-import { ResponseAuthHandler } from '../../../../types/Handler';
 import { IPacketHandlerResult } from '../../../../types/PacketHandler';
 import { IEAPMethod } from '../../../../types/EAPMethod';
 import { IAuthentication } from '../../../../types/Authentication';
-
-interface IEAPResponseHandlers {
-	response: (respData?: Buffer, msgType?: number) => void;
-	checkAuth: ResponseAuthHandler;
-}
 
 export class EAPMD5 implements IEAPMethod {
 	getEAPType(): number {
@@ -32,6 +26,8 @@ export class EAPMD5 implements IEAPMethod {
 		_orgRadiusPacket: RadiusPacket
 	): Promise<IPacketHandlerResult> {
 		// not implemented
+
+		debug('eap md5 not implemented...');
 
 		return {};
 	}

@@ -29,7 +29,7 @@ Therefore it's not easy to extend or modify it, or even bring new feature in.
 The idea of this project is to make a super simple node radius server, which is async by default. No complex
 thread handling, no other fancy thing. The basic goal is to make WPA2 authenticiation easy again.
 
-### 802.11x protocol in node
+### 802.1x protocol in node
 
 Another motivation is that it is very exciting to see how wireless protocols have evolved, and see
 how a implementation like TTLS works.

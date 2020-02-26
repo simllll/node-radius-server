@@ -9,7 +9,8 @@ import { startTLSServer } from './tls/crypt';
 /* test node version */
 const testSocket = startTLSServer();
 if (typeof (testSocket.tls as any).exportKeyingMaterial !== 'function') {
-	console.error('UNSUPPORTED NODE VERSION FOUND!!')
+	console.error(`UNSUPPORTED NODE VERSION (${process.version}) FOUND!!`);
+
 	console.log('run "sudo npx n nightly" to get nightly build of node js.');
 	process.exit(-1);
 }

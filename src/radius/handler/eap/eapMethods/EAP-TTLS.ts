@@ -8,7 +8,6 @@ import { attr_id_to_name, attr_name_to_id } from 'radius';
 import debug from 'debug';
 
 import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../../tls/crypt';
-import { ResponseAuthHandler } from '../../../../types/Handler';
 import {
 	IPacket,
 	IPacketAttributes,
@@ -22,11 +21,6 @@ import { IAuthentication } from '../../../../types/Authentication';
 import { secret } from '../../../../../config';
 
 const log = debug('radius:eap:ttls');
-
-interface IEAPResponseHandlers {
-	response: (respData?: Buffer, msgType?: number) => void;
-	checkAuth: ResponseAuthHandler;
-}
 
 function tlsHasExportKeyingMaterial(
 	tlsSocket
