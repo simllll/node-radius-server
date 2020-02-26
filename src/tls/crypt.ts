@@ -3,21 +3,15 @@ import * as tls from 'tls';
 import { createSecureContext } from 'tls';
 import * as crypto from 'crypto';
 import * as DuplexPair from 'native-duplexpair';
-import * as constants from 'constants';
 import debug from 'debug';
+import * as NodeCache from 'node-cache';
 import * as config from '../../config';
 
 const log = debug('radius:tls');
 
 // https://nodejs.org/api/tls.html
 const tlsOptions: tls.SecureContextOptions = {
-	...config.certificate,
-	// ca: fs.readFileSync('./ssl/server.pem'),
-	// eslint-disable-next-line no-bitwise
-	secureOptions: constants.SSL_OP_NO_TICKET // : constants.SSL_OP_NO_TLSv1_2 | constants.SSL_OP_NO_TLSv1_1,
-	// honorCipherOrder: true
-	// secureOptions:
-	// ecdhCurve: 'auto'
+	...config.certificate
 };
 log('tlsOptions', tlsOptions);
 const secureContext = createSecureContext(tlsOptions);
@@ -26,6 +20,8 @@ export interface ITLSServer {
 	events: events.EventEmitter;
 	tls: tls.TLSSocket;
 }
+
+const resumeSessions = new NodeCache({ stdTTL: 86400 }); // session reidentification maximum 1 day
 
 export function startTLSServer(): ITLSServer {
 	const duplexpair = new DuplexPair();
@@ -40,6 +36,27 @@ export function startTLSServer(): ITLSServer {
 		requestCert: false
 	});
 	const encrypted = duplexpair.socket2;
+
+	// for older tls versions without ticketing support
+	cleartext.on('newSession', (sessionId: Buffer, sessionData: Buffer, callback: () => void) => {
+		log(`TLS new session (${sessionId.toString('hex')})`);
+
+		resumeSessions.set(sessionId.toString('hex'), sessionData);
+		callback();
+	});
+
+	cleartext.on(
+		'resumeSession',
+		(sessionId: Buffer, callback: (err: Error | null, sessionData: Buffer | null) => void) => {
+			const resumedSession = (resumeSessions.get(sessionId.toString('hex')) as Buffer) || null;
+
+			if (resumedSession) {
+				log(`TLS resumed session (${sessionId.toString('hex')})`);
+			}
+
+			callback(null, resumedSession);
+		}
+	);
 
 	emitter.on('decrypt', (data: Buffer) => {
 		encrypted.write(data);
@@ -58,16 +75,6 @@ export function startTLSServer(): ITLSServer {
 
 	cleartext.on('secure', () => {
 		const cipher = cleartext.getCipher();
-
-		/*
-        log('Authorized', cleartext.authorized);
-        log('getTLSTicket', cleartext.getTLSTicket());
-        log('getEphemeralKeyInfo', cleartext.getEphemeralKeyInfo());
-        log('getPeerCertificate', cleartext.getPeerCertificate());
-        log('getSharedSigalgs', cleartext.getSharedSigalgs());
-        log('getCertificate', cleartext.getCertificate());
-        log('getSession', cleartext.getSession());
-        */
 
 		if (cipher) {
 			log(`TLS negotiated (${cipher.name}, ${cipher.version})`);
@@ -88,10 +95,7 @@ export function startTLSServer(): ITLSServer {
 			// cleartext.getTicketKeys()
 		});
 
-		log('*********** new client connection established / secured ********');
-		//        this.emit('secure', securePair.cleartext);
-		//        this.encryptAllFutureTraffic();
-		log('GET FINSIHED', cleartext.getFinished());
+		log('*********** new TLS connection established / secured ********');
 	});
 
 	cleartext.on('error', (err?: Error) => {
@@ -115,12 +119,12 @@ function md5Hex(buffer: Buffer): Buffer {
 	return hasher.digest(); // new Buffer(hasher.digest("binary"), "binary");
 }
 
-// alloc_size
+/*
+  const buffer = tlsSocket.exportKeyingMaterial(128, 'ttls keying material');
 
-// 0,
-//  EAP_TLS_KEY_LEN 64
-//  EAP_EMSK_LEN 64
-// const buffer = tlsSocket.exportKeyingMaterial(128, 'ttls keying material');
+  EAP_TLS_KEY from 0 to 64
+  EAP_EMSK from 64 to 128
+*/
 
 export function encodeTunnelPW(key: Buffer, authenticator: Buffer, secret: string): Buffer {
 	// see freeradius TTLS implementation how to obtain "key"......
