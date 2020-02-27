@@ -1,4 +1,4 @@
-import { Client, ClientOptions, createClient } from 'ldapjs';
+import { ClientOptions, createClient } from 'ldapjs';
 import debug from 'debug';
 import * as tls from 'tls';
 import { IAuthentication } from '../types/Authentication';
@@ -22,8 +22,6 @@ interface IGoogleLDAPAuthOptions {
 }
 
 export class GoogleLDAPAuth implements IAuthentication {
-	private ldapDNClient: Client;
-
 	private lastDNsFetch: Date;
 
 	private allValidDNsCache: { [key: string]: string };
@@ -43,10 +41,6 @@ export class GoogleLDAPAuth implements IAuthentication {
 			}
 		};
 
-		this.ldapDNClient = createClient(this.config).on('error', error => {
-			console.error('Error in ldap', error);
-		});
-
 		this.fetchDNs();
 	}
 
@@ -54,7 +48,12 @@ export class GoogleLDAPAuth implements IAuthentication {
 		const dns: { [key: string]: string } = {};
 
 		await new Promise((resolve, reject) => {
-			this.ldapDNClient.search(
+			const ldapDNClient = createClient(this.config).on('error', error => {
+				console.error('Error in ldap', error);
+				reject(error);
+			});
+
+			ldapDNClient.search(
 				this.base,
 				{
 					scope: 'sub'
@@ -99,6 +98,13 @@ export class GoogleLDAPAuth implements IAuthentication {
 	async authenticate(username: string, password: string, count = 0, forceFetching = false) {
 		const cacheValidTime = new Date();
 		cacheValidTime.setHours(cacheValidTime.getHours() - 12);
+
+		/*
+		 just a test for super slow google responses
+		await new Promise((resolve, reject) => {
+			setTimeout(resolve, 10000); // wait 10 seconds
+		})
+		 */
 
 		let dnsFetched = false;
 

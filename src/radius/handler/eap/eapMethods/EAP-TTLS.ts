@@ -3,6 +3,7 @@
 /* eslint-disable no-bitwise */
 import * as tls from 'tls';
 import * as NodeCache from 'node-cache';
+// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
 // @ts-ignore
 import { attr_id_to_name, attr_name_to_id } from 'radius';
 import debug from 'debug';
@@ -43,6 +44,8 @@ interface IAVPEntry {
 }
 
 export class EAPTTLS implements IEAPMethod {
+	private lastProcessedIdentifier = new NodeCache({ useClones: false, stdTTL: 60 });
+
 	// { [key: string]: Buffer } = {};
 	private queueData = new NodeCache({ useClones: false, stdTTL: 60 }); // queue data maximum for 60 seconds
 
@@ -185,7 +188,7 @@ export class EAPTTLS implements IEAPMethod {
 		 Message Length         |             Data...
 		 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 		 */
-		// const identifier = msg.slice(1, 2).readUInt8(0);
+		const identifier = msg.slice(1, 2).readUInt8(0);
 		const flags = msg.slice(5, 6).readUInt8(0); // .toString('hex');
 		/*
 			0   1   2   3   4   5   6   7
@@ -201,15 +204,15 @@ export class EAPTTLS implements IEAPMethod {
 		*/
 		const decodedFlags = {
 			// L
-			lengthIncluded: flags & 0b010000000,
+			lengthIncluded: !!(flags & 0b10000000),
 			// M
-			moreFragments: flags & 0b001000000,
+			moreFragments: !!(flags & 0b01000000),
 			// S
-			start: flags & 0b000100000,
+			start: !!(flags & 0b00100000),
 			// R
-			// reserved: flags & 0b000011000,
+			// reserved: flags & 0b00011000,
 			// V
-			version: flags & 0b010000111
+			version: flags & 0b00000111
 		};
 
 		let msglength;
@@ -221,7 +224,7 @@ export class EAPTTLS implements IEAPMethod {
 		log('>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS', {
 			flags: `00000000${flags.toString(2)}`.substr(-8),
 			decodedFlags,
-			// identifier,
+			identifier,
 			msglength,
 			data
 			// dataStr: data.toString()
@@ -291,15 +294,23 @@ export class EAPTTLS implements IEAPMethod {
 		msg: Buffer,
 		packet: IPacket
 	): Promise<IPacketHandlerResult> {
+		if (identifier === this.lastProcessedIdentifier.get(stateID)) {
+			log(`ignoring message ${identifier}, because it's processing already... ${stateID}`);
+
+			return {};
+		}
+		this.lastProcessedIdentifier.set(stateID, identifier);
 		const { data } = this.decodeTTLSMessage(msg);
 
 		// check if no data package is there and we have something in the queue, if so.. empty the queue first
 		if (!data || data.length === 0) {
 			const queuedData = this.queueData.get(stateID);
 			if (queuedData instanceof Buffer && queuedData.length > 0) {
+				log(`returning queued data for ${stateID}`);
 				return this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, queuedData, false);
 			}
 
+			log(`empty data queue for ${stateID}`);
 			return {};
 		}
 
@@ -373,71 +384,6 @@ export class EAPTTLS implements IEAPMethod {
 				'encrypt',
 				this.buildAVP(attr_name_to_id('EAP-Message'), eapMessage[1] as Buffer)
 			);
-
-			/*
-			switch (type) {
-				case 1: // PAP
-					try {
-						const { username, password } = this.papChallenge.decode(incomingData);
-						const authResult = await this.authentication.authenticate(username, password);
-
-						sendResponsePromise.resolve(
-							this.authResponse(identifier, authResult, connection.tls, orgRadiusPacket)
-						);
-					} catch (err) {
-						// pwd not found..
-						console.error('pwd not found', err);
-						connection.events.emit('end');
-						// NAK
-						sendResponsePromise.resolve(this.buildEAPTTLSResponse(identifier, 3, 0, stateID));
-					}
-					break;
-				case 79: {
-					const result = await this.tunnelEAP.handlePacket(
-						{
-							State: `${stateID}-inner`,
-							'EAP-Message': AVPdata
-						},
-						orgRadiusPacket
-					);
-
-					log('inner tunnel result', result);
-
-					if (
-						result.code === PacketResponseCode.AccessReject ||
-						result.code === PacketResponseCode.AccessAccept
-					) {
-						sendResponsePromise.resolve(
-							this.authResponse(
-								identifier,
-								result.code === PacketResponseCode.AccessAccept,
-								connection.tls,
-								orgRadiusPacket
-							)
-						);
-						return;
-					}
-
-					const eapMessage = result.attributes?.find(attr => attr[0] === 'EAP-Message');
-					if (!eapMessage) {
-						throw new Error('no eap message found');
-					}
-
-					connection.events.emit('encrypt', this.buildAVP(79, eapMessage[1]));
-					break;
-				}
-				default: {
-					log('data', incomingData);
-					log('data str', incomingData.toString());
-
-					log('UNSUPPORTED AUTH TYPE, requesting identify again (we need PAP!)', type);
-
-					connection.events.emit(
-						'encrypt',
-						this.buildAVP(79, this.buildEAPTTLS(identifier, 3, 0, stateID, Buffer.from([1])))
-					);
-				}
-			} */
 		};
 
 		const responseHandler = (encryptedResponseData: Buffer) => {
