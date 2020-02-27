@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### 0.0.1 (2020-02-27)
+## 1.0.0 (2020-02-27)
 
 
 ### Features
@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+* **docs:** better file names ([5897498](https://github.com/simllll/node-radius-server/commit/589749883c4c881c3af753530987d6f57d8d809d))
 * improve coping with long running auth requests ([7ca60a2](https://github.com/simllll/node-radius-server/commit/7ca60a20cc24eb8100ed1f20fe18e7ec664fd176))
 * **auth:** improve google auth ([0baf815](https://github.com/simllll/node-radius-server/commit/0baf8155bf74fed9e08826b1aea8242f72c81878))
 * **docs:** add examples ([a3ed0be](https://github.com/simllll/node-radius-server/commit/a3ed0be02db0a7fcd89544c89d9b0ee11e949808))
