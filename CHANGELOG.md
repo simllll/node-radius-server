@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### 0.0.3 (2020-02-27)
+### 0.0.1 (2020-02-27)
 
 
 ### Features
@@ -27,4 +27,6 @@ All notable changes to this project will be documented in this file. See [standa
 * add MS-MPPE-Send-Key and MS-MPPE-Recv-Key ([7e28c60](https://github.com/simllll/node-radius-server/commit/7e28c60d81abe4c2c5269babbf6ef5951d65d682))
 * eap call is using wrong this, needs more refactoring later ([837453f](https://github.com/simllll/node-radius-server/commit/837453fca250abb45f1069405b96e29fc0e3e9c4))
 
-### [0.0.2](https://github.com/simllll/node-radius-server/compare/v0.0.1...v0.0.2) (2020-02-27)
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.

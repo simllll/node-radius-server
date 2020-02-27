@@ -1,7 +1,7 @@
 {
 	"name": "radius-server",
 	"description": "radius server for google LDAP and TTLS",
-	"version": "0.0.3",
+	"version": "0.0.1",
 	"engines": {
 		"node": ">13.9.x"
 	},
