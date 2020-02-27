@@ -12,6 +12,7 @@
 	],
 	"homepage": "https://github.com/simllll/node-radius-server",
 	"scripts": {
+		"release": "standard-version",
 		"debug": "DEBUG=radius:* node dist/app.js",
 		"start": "node dist/app.js",
 		"build": "tsc",
@@ -21,6 +22,7 @@
 		"test-radtest": "radtest -x user pwd localhost 1812 testing123",
 		"create-certificate": "sh ./ssl/create.sh && sh ./ssl/sign.sh"
 	},
+	"main": "dist/app.js",
 	"dependencies": {
 		"debug": "^4.1.1",
 		"imap-simple": "^4.3.0",
