@@ -1,7 +1,7 @@
 {
 	"name": "radius-server",
 	"description": "radius server for google LDAP and TTLS",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"engines": {
 		"node": ">13.9.x"
 	},
@@ -31,6 +31,7 @@
 	},
 	"license": "GPLv3",
 	"devDependencies": {
+		"standard-version": "^7.1.0",
 		"@hokify/eslint-config": "^0.2.4",
 		"@types/chai": "^4.2.9",
 		"@types/ldapjs": "^1.0.5",
