@@ -5,6 +5,11 @@
 	"engines": {
 		"node": ">13.9.x"
 	},
+	"files": [
+		"config.js",
+		"dist",
+		"ssl"
+	],
 	"homepage": "https://github.com/simllll/node-radius-server",
 	"scripts": {
 		"debug": "DEBUG=radius:* node dist/app.js",
