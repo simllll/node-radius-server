@@ -9,8 +9,8 @@ describe('test google ldap auth', function() {
 		const auth = new GoogleLDAPAuth({
 			base: 'dc=hokify,dc=com',
 			tlsOptions: {
-				key: fs.readFileSync('./ldap.gsuite.hokify.com.40567.key'),
-				cert: fs.readFileSync('./ldap.gsuite.hokify.com.40567.crt')
+				key: fs.readFileSync('./ldap.gsuite.key'),
+				cert: fs.readFileSync('./ldap.gsuite.crt')
 			}
 		});
 

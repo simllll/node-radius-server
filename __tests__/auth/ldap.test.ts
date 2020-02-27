@@ -11,8 +11,8 @@ describe('test ldap auth', function() {
 			base: 'dc=hokify,dc=com',
 			tlsOptions: {
 				servername: 'ldap.google.com',
-				key: fs.readFileSync('./ldap.gsuite.hokify.com.40567.key'),
-				cert: fs.readFileSync('./ldap.gsuite.hokify.com.40567.crt')
+				key: fs.readFileSync('./ldap.gsuite.key'),
+				cert: fs.readFileSync('./ldap.gsuite.crt')
 			}
 		});
 

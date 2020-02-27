@@ -94,8 +94,8 @@ interface IGoogleLDAPAuthOptions {
 	base: string;
 	/** tls options
 	 * e.g. {
-			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
-			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt')
+			key: fs.readFileSync('ldap.gsuite.key'),
+			cert: fs.readFileSync('ldap.gsuite.crt')
 		} */
 	tlsOptions: tls.TlsOptions;
 }
@@ -110,8 +110,8 @@ c = {
 	authenticationOptions: {
 		base: 'dc=hokify,dc=com',
 		tlsOptions: {
-			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
-			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt')
+			key: fs.readFileSync('ldap.gsuite.key'),
+			cert: fs.readFileSync('ldap.gsuite.crt')
 		}
 	}
 };
@@ -132,8 +132,8 @@ interface ILDAPAuthOptions {
 	base: string;
 	/** tls options
 	 * e.g. {
-			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
-			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt'),
+			key: fs.readFileSync('ldap.gsuite.key'),
+			cert: fs.readFileSync('ldap.gsuite.crt'),
 			servername: 'ldap.google.com'
 		} */
 	tlsOptions?: any;
@@ -153,8 +153,8 @@ c = {
 		url: 'ldaps://ldap.google.com',
 		base: 'dc=hokify,dc=com',
 		tlsOptions: {
-			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
-			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt'),
+			key: fs.readFileSync('ldap.gsuite.key'),
+			cert: fs.readFileSync('ldap.gsuite.crt'),
 			servername: 'ldap.google.com'
 		}
 	}

@@ -15,8 +15,8 @@ interface IGoogleLDAPAuthOptions {
 	base: string;
 	/** tls options
 	 * e.g. {
-			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
-			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt')
+			key: fs.readFileSync('ldap.gsuite.key'),
+			cert: fs.readFileSync('ldap.gsuite.crt')
 		} */
 	tlsOptions: tls.TlsOptions;
 }

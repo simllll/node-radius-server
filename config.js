@@ -24,8 +24,9 @@ module.exports = {
 	authenticationOptions: {
 		base: 'dc=hokify,dc=com',
 		tlsOptions: {
-			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
-			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt')
+			// get your keys from http://admin.google.com/ -> Apps -> LDAP -> Client
+			key: fs.readFileSync('ldap.gsuite.key'),
+			cert: fs.readFileSync('ldap.gsuite.crt')
 		}
 	}
 
@@ -35,8 +36,8 @@ module.exports = {
 		url: 'ldaps://ldap.google.com',
 		base: 'dc=hokify,dc=com',
 		tlsOptions: {
-			key: fs.readFileSync('ldap.gsuite.hokify.com.40567.key'),
-			cert: fs.readFileSync('ldap.gsuite.hokify.com.40567.crt'),
+			key: fs.readFileSync('ldap.gsuite.key'),
+			cert: fs.readFileSync('ldap.gsuite.crt'),
 			servername: 'ldap.google.com'
 		}
 	}
