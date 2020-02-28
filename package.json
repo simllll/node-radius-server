@@ -16,7 +16,7 @@
 	],
 	"homepage": "https://github.com/simllll/node-radius-server",
 	"scripts": {
-		"release": "standard-version",
+		"release": "npm run build && standard-version",
 		"debug": "DEBUG=radius:* node dist/app.js",
 		"start": "node dist/app.js",
 		"build": "tsc",
