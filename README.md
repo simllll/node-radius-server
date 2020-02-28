@@ -9,15 +9,15 @@ Authenticiation tested with Windows, Linux, Android and Apple devices.
 
 # Quick start
 
-1.) install nightly node js
+1. Install nightly node js
     - easiest way is to install a node js version from nodejs.org and run "npx n nightly" to install nightly version.
-2.) check out the config options, e.g. for google ldap, download your certificates from http://admin.google.com/ -> Apps -> LDAP -> Client
+2. Check out the config options, e.g. for google ldap, download your certificates from http://admin.google.com/ -> Apps -> LDAP -> Client
 download the files and name them "ldap.gsuite.key" and "ldap.gsuite.crt" accordingly.
-3.) switch to this directory and run "npx radius-server -s YourRadiusSecret"
-4.) Log into your WLAN Controller and configure the radius server to your newly running radius
-5.) On your clients, just connect to the WLAN, the clients should figure out the correct method by their own,
+3. Switch to this directory and run "npx radius-server -s YourRadiusSecret"
+4. Log into your WLAN Controller and configure the radius server to your newly running radius
+5. On your clients, just connect to the WLAN, the clients should figure out the correct method by their own,
 if they don't use: WPA2-Enterprise -> EAP-TTLS -> PAP / CHAP
-6.) Log in via your google credentials (email + password, ... e.g. youremail@yourcompany.com)
+6. Log in via your google credentials (email + password, ... e.g. youremail@yourcompany.com)
 
 ## Known Issues / Disclaimer
 
