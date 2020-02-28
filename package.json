@@ -5,7 +5,11 @@
 	"engines": {
 		"node": ">13.9.x"
 	},
+	"bin": {
+		"radius-server": "./bin/radius-server"
+	},
 	"files": [
+		"bin",
 		"config.js",
 		"dist",
 		"ssl"
