@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/simllll/node-radius-server/compare/v1.0.0...v1.1.0) (2020-02-28)
+
+
+### Features
+
+* **cli:** allow setting config vars via cli ([d9ff95b](https://github.com/simllll/node-radius-server/commit/d9ff95bbbbea9ade9721e3f5d4dc2323988da3d6))
+
 ## 1.0.0 (2020-02-27)
 
 
