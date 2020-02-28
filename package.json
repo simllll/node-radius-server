@@ -3,7 +3,7 @@
 	"description": "radius server for google LDAP and TTLS",
 	"version": "1.1.0",
 	"engines": {
-		"node": ">13.9.x"
+		"node": ">13.9"
 	},
 	"bin": {
 		"radius-server": "./bin/radius-server"
@@ -26,6 +26,8 @@
 		"test-radtest": "radtest -x user pwd localhost 1812 testing123",
 		"create-certificate": "sh ./ssl/create.sh && sh ./ssl/sign.sh"
 	},
+	"author": "Simon Tretter <simon.tretter@hokify.com>",
+	"preferGlobal": true,
 	"main": "dist/app.js",
 	"dependencies": {
 		"debug": "^4.1.1",
