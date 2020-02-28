@@ -1,4 +1,5 @@
 import * as LdapAuth from 'ldapauth-fork';
+import * as fs from 'fs';
 import { IAuthentication } from '../types/Authentication';
 
 interface ILDAPAuthOptions {
@@ -9,10 +10,13 @@ interface ILDAPAuthOptions {
 	/** base DN
 	 *  e.g. 'dc=hokify,dc=com', */
 	base: string;
+
+	tls: {
+		keyFile: string;
+		certFile: string;
+	};
 	/** tls options
 	 * e.g. {
-			key: fs.readFileSync('ldap.gsuite.key'),
-			cert: fs.readFileSync('ldap.gsuite.crt'),
 			servername: 'ldap.google.com'
 		} */
 	tlsOptions?: any;
@@ -25,12 +29,18 @@ interface ILDAPAuthOptions {
 export class LDAPAuth implements IAuthentication {
 	private ldap: LdapAuth;
 
-	constructor(options: ILDAPAuthOptions) {
+	constructor(config: ILDAPAuthOptions) {
+		const tlsOptions = {
+			key: fs.readFileSync(config.tls.keyFile),
+			cert: fs.readFileSync(config.tls.certFile),
+			...config.tlsOptions
+		};
+
 		this.ldap = new LdapAuth({
-			url: options.url,
-			searchBase: options.base,
-			tlsOptions: options.tlsOptions,
-			searchFilter: options.searchFilter || '(uid={{username}})',
+			url: config.url,
+			searchBase: config.base,
+			tlsOptions,
+			searchFilter: config.searchFilter || '(uid={{username}})',
 			reconnect: true
 		});
 		this.ldap.on('error', function(err) {

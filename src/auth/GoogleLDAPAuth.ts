@@ -1,6 +1,7 @@
 import { ClientOptions, createClient } from 'ldapjs';
 import debug from 'debug';
 import * as tls from 'tls';
+import * as fs from 'fs';
 import { IAuthentication } from '../types/Authentication';
 
 const usernameFields = ['posixUid', 'mail'];
@@ -13,12 +14,16 @@ interface IGoogleLDAPAuthOptions {
 	/** base DN
 	 *  e.g. 'dc=hokify,dc=com', */
 	base: string;
+	tls: {
+		keyFile: string;
+		certFile: string;
+	};
 	/** tls options
 	 * e.g. {
 			key: fs.readFileSync('ldap.gsuite.key'),
 			cert: fs.readFileSync('ldap.gsuite.crt')
 		} */
-	tlsOptions: tls.TlsOptions;
+	tlsOptions?: tls.TlsOptions;
 }
 
 export class GoogleLDAPAuth implements IAuthentication {
@@ -33,12 +38,16 @@ export class GoogleLDAPAuth implements IAuthentication {
 	constructor(config: IGoogleLDAPAuthOptions) {
 		this.base = config.base;
 
+		const tlsOptions = {
+			key: fs.readFileSync(config.tls.keyFile),
+			cert: fs.readFileSync(config.tls.certFile),
+			servername: 'ldap.google.com',
+			...config.tlsOptions
+		};
+
 		this.config = {
 			url: 'ldaps://ldap.google.com:636',
-			tlsOptions: {
-				...config.tlsOptions,
-				servername: 'ldap.google.com'
-			}
+			tlsOptions
 		};
 
 		this.fetchDNs();

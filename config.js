@@ -23,10 +23,10 @@ module.exports = {
 	authentication: 'GoogleLDAPAuth',
 	authenticationOptions: {
 		base: 'dc=hokify,dc=com',
-		tlsOptions: {
-			// get your keys from http://admin.google.com/ -> Apps -> LDAP -> Client
-			key: fs.readFileSync('ldap.gsuite.key'),
-			cert: fs.readFileSync('ldap.gsuite.crt')
+		// get your keys from http://admin.google.com/ -> Apps -> LDAP -> Client
+		tls: {
+			keyFile: 'ldap.gsuite.key',
+			certFile: 'ldap.gsuite.crt'
 		}
 	}
 
@@ -35,9 +35,11 @@ module.exports = {
 	authenticationOptions: {
 		url: 'ldaps://ldap.google.com',
 		base: 'dc=hokify,dc=com',
+		tls: {
+			keyFile: 'ldap.gsuite.key',
+			certFile: 'ldap.gsuite.crt'
+		},
 		tlsOptions: {
-			key: fs.readFileSync('ldap.gsuite.key'),
-			cert: fs.readFileSync('ldap.gsuite.crt'),
 			servername: 'ldap.google.com'
 		}
 	}

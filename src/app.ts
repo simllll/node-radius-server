@@ -1,3 +1,4 @@
+import * as yargs from 'yargs';
 import { UDPServer } from './server/UDPServer';
 import { RadiusService } from './radius/RadiusService';
 
@@ -15,9 +16,25 @@ if (typeof (testSocket.tls as any).exportKeyingMaterial !== 'function') {
 	process.exit(-1);
 }
 
-console.log(`Listener Port: ${config.port || 1812}`);
-console.log(`RADIUS Secret: ${config.secret}`);
-console.log(`Auth Mode: ${config.authentication}`);
+const { argv } = yargs
+	.usage('NODE RADIUS Server\nUsage: radius-server')
+	.example('radius-server --port 1812 -s radiussecret')
+	.default({
+		port: config.port || 1812,
+		s: config.secret || 'testing123',
+		authentication: config.authentication,
+		authenticationOptions: config.authenticationOptions
+	})
+	.describe('port', 'RADIUS server listener port')
+	.alias('s', 'secret')
+	.describe('secret', 'RADIUS secret')
+	.number('port')
+	.string(['secret', 'authentication']);
+
+console.log(`Listener Port: ${argv.port || 1812}`);
+console.log(`RADIUS Secret: ${argv.secret}`);
+console.log(`Auth ${argv.authentication}`);
+console.log(`Auth Config: ${JSON.stringify(argv.authenticationOptions, undefined, 3)}`);
 
 (async () => {
 	/* configure auth mechansim */
