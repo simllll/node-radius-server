@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const SSL_CERT_DIRECTORY = './ssl/cert';
+const SSL_CERT_DIRECTORY = path.join(__dirname, './ssl/cert');
 
 module.exports = {
 	port: 1812,
