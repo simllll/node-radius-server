@@ -1,18 +1,18 @@
-Basic RADIUS Server for node.js for Google LDAP Service and WPA2 Enteprise WLAN Authentification.
+Basic RADIUS Server for node.js for Google LDAP Service and WPA2 Enterprise WLAN Authentification.
 
 - supports LDAP Authentification Backend
-- supports WPA2 Entprise (TTLS over PAP)
+- supports WPA2 Enterprise (TTLS over PAP)
 
 Protect your WIFI access with a username and password by a credential provider you already use!
 
-Authenticiation tested with Windows, Linux, Android and Apple devices.
+Authentication tested with Windows, Linux, Android and Apple devices.
 
 # Quick start
 
 1. Install nightly node js
     - easiest way is to install a node js version from nodejs.org and run "npx n nightly" to install nightly version.
 2. Check out the config options, e.g. for google ldap, download your certificates from http://admin.google.com/ -> Apps -> LDAP -> Client
-download the files and name them "ldap.gsuite.key" and "ldap.gsuite.crt" accordingly.
+download the files and name them "ldap.gsuite.key" and "ldap.gsuite.crt" accordingly (Ensure you have activated your newly created LDAP Client in Google Admin).
 3. Switch to this directory and run "npx radius-server -s YourRadiusSecret"
 4. Log into your WLAN Controller and configure the radius server to your newly running radius
 5. On your clients, just connect to the WLAN, the clients should figure out the correct method by their own,
@@ -91,169 +91,8 @@ var config = {
 
 ## Configuration
 
-see config.js in root
-
-### Authentications
-
-#### Google LDAP
-
-google ldap optimized authenticiation implementaiton
-
-```typescript
-interface IGoogleLDAPAuthOptions {
-	/** base DN
-	 *  e.g. 'dc=hokify,dc=com', */
-	base: string;
-	/** tls options
-	 * e.g. {
-			key: fs.readFileSync('ldap.gsuite.key'),
-			cert: fs.readFileSync('ldap.gsuite.crt')
-		} */
-	tlsOptions: tls.TlsOptions;
-}
-```
-
-Example
-
-```js
-c = {
-	// GoogleLDAPAuth (optimized for google auth)
-	authentication: 'GoogleLDAPAuth',
-	authenticationOptions: {
-		base: 'dc=hokify,dc=com',
-		tlsOptions: {
-			key: fs.readFileSync('ldap.gsuite.key'),
-			cert: fs.readFileSync('ldap.gsuite.crt')
-		}
-	}
-};
-```
-
-#### LDAP
-
-ldap authentication
-
-```typescript
-interface ILDAPAuthOptions {
-	/** ldap url
-	 * e.g. ldaps://ldap.google.com
-	 */
-	url: string;
-	/** base DN
-	 *  e.g. 'dc=hokify,dc=com', */
-	base: string;
-	/** tls options
-	 * e.g. {
-			key: fs.readFileSync('ldap.gsuite.key'),
-			cert: fs.readFileSync('ldap.gsuite.crt'),
-			servername: 'ldap.google.com'
-		} */
-	tlsOptions?: any;
-	/**
-	 * searchFilter
-	 */
-	searchFilter?: string;
-}
-```
-
-Example
-
-```js
-c = {
-	authentication: 'LDAPAuth',
-	authenticationOptions: {
-		url: 'ldaps://ldap.google.com',
-		base: 'dc=hokify,dc=com',
-		tlsOptions: {
-			key: fs.readFileSync('ldap.gsuite.key'),
-			cert: fs.readFileSync('ldap.gsuite.crt'),
-			servername: 'ldap.google.com'
-		}
-	}
-};
-```
-
-#### IMAP
-
-imap authenticiation
-
-```typescript
-interface IIMAPAuthOptions {
-	host: string;
-	port?: number;
-	useSecureTransport?: boolean;
-	validHosts?: string[];
-}
-```
-
-Example
-
-```js
-c = {
-	authentication: 'IMAPAuth',
-	authenticationOptions: {
-		host: 'imap.gmail.com',
-		port: 993,
-		useSecureTransport: true,
-		validHosts: ['hokify.com']
-	}
-};
-```
-
-#### SMTP
-
-smtp authenticiation
-
-```typescript
-interface ISMTPAuthOptions {
-	host: string;
-	port?: number;
-	useSecureTransport?: boolean;
-	validHosts?: string[];
-}
-```
-
-Example
-
-```js
-c = {
-	authentication: 'IMAPAuth',
-	authenticationOptions: {
-		host: 'smtp.gmail.com',
-		port: 465,
-		useSecureTransport: true,
-		validHosts: ['gmail.com']
-	}
-};
-```
-
-#### Static Auth
-
-static authenticiation
-
-```typescript
-interface IStaticAuthOtions {
-	validCrentials: {
-		username: string;
-		password: string;
-	}[];
-}
-```
-
-Example
-
-```js
-c = {
-	authentication: 'StaticAuth',
-	authenticationOptions: {
-		validCredentials: [
-			{ username: 'test', password: 'pwd' },
-			{ username: 'user1', password: 'password' },
-			{ username: 'admin', password: 'cool' }
-		]
-	}
-};
-```
+For authentication see [Authentication Details](src/auth/README.md).
+For general config options run with --help or see see [config.js](config.js) in root.
 
 ## Usage
 
