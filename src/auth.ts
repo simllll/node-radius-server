@@ -14,6 +14,7 @@ export class Authentication implements IAuthentication {
 		const cacheKey = `usr:${username}|pwd:${password}`;
 		const fromCache = this.cache.get(cacheKey) as undefined | boolean;
 		if (fromCache !== undefined) {
+			console.log(`Cached Auth Result for user ${username}`, fromCache ? 'SUCCESS' : 'Failure');
 			return fromCache;
 		}
 
