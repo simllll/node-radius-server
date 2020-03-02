@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.1](https://github.com/simllll/node-radius-server/compare/v1.1.0...v1.1.1) (2020-03-02)
+
+
+### Bug Fixes
+
+* **auth:** cache only valid results for one day ([a8a0247](https://github.com/simllll/node-radius-server/commit/a8a02478ce522eb51c46517b4176aa0d50481676))
+* **config:** use __dirname to resolve path to ssl certs ([7a28a0d](https://github.com/simllll/node-radius-server/commit/7a28a0dc6bfbae307765e03f4b15c57c84fa0dc2))
+* **docs:** fix some typos ([5519391](https://github.com/simllll/node-radius-server/commit/5519391aa3c688422da8d98a3bd789615738b974))
+
 ## [1.1.0](https://github.com/simllll/node-radius-server/compare/v1.0.0...v1.1.0) (2020-02-28)
 
 
