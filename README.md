@@ -9,10 +9,11 @@ Authentication tested with Windows, Linux, Android and Apple devices.
 
 # Quick start
 
-1. Install nightly node js
-    - easiest way is to install a node js version from nodejs.org and run "npx n nightly" to install nightly version.
+1. Install node js => 13.10.1
+    - easiest way is to install a node js version from nodejs.org or run "npx n latest" to install latest version.
 2. Check out the config options, e.g. for google ldap, download your certificates from http://admin.google.com/ -> Apps -> LDAP -> Client
 download the files and name them "ldap.gsuite.key" and "ldap.gsuite.crt" accordingly (Ensure you have activated your newly created LDAP Client in Google Admin).
+3. Switch to this directory and run "npx radius-server -s YourRadiusSecret"
 3. Switch to this directory and run "npx radius-server -s YourRadiusSecret"
 4. Log into your WLAN Controller and configure the radius server to your newly running radius
 5. On your clients, just connect to the WLAN, the clients should figure out the correct method by their own,
@@ -21,7 +22,7 @@ if they don't use: WPA2-Enterprise -> EAP-TTLS -> PAP / CHAP
 
 ## Known Issues / Disclaimer
 
-This is a first implementation, which is currently only working with node js nightly (node 13+) (see https://github.com/nodejs/node/pull/31814).
+Support for this has landed in node 13.10.1, therefore ensure you have installed at least this node version.
 
 - MD5 Challenge not implenented, but RFC says this is mandatory ;-)
 - Inner Tunnel does not act differently, even though spec says that EAP-message are not allowed to get fragmented,
@@ -96,6 +97,6 @@ For general config options run with --help or see see [config.js](config.js) in 
 
 ## Usage
 
-Ensure you have installed latest nightly node version and run:
+Ensure you have installed latest node version (>= 13.10.1) and run:
 
     npm run start
