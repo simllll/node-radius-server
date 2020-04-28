@@ -30,7 +30,7 @@
 	"preferGlobal": true,
 	"main": "dist/app.js",
 	"dependencies": {
-		"@hokify/node-ts-cache": "^4.0.1",
+		"@hokify/node-ts-cache": "^5.1.4",
 		"debug": "^4.1.1",
 		"imap-simple": "^4.3.0",
 		"ldapauth-fork": "^4.3.2",
