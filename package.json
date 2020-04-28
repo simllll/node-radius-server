@@ -32,7 +32,7 @@
 	"dependencies": {
 		"@hokify/node-ts-cache": "^4.0.1",
 		"debug": "^4.1.1",
-		"imap-simple": "^4.3.0",
+		"imap-simple": "^5.0.0",
 		"ldapauth-fork": "^4.3.2",
 		"ldapjs": "^1.0.2",
 		"native-duplexpair": "^1.0.0",
