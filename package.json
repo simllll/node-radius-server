@@ -44,7 +44,7 @@
 	"license": "GPLv3",
 	"devDependencies": {
 		"ts-node": "^8.6.2",
-		"standard-version": "^7.1.0",
+		"standard-version": "^8.0.0",
 		"@hokify/eslint-config": "^0.2.7",
 		"@types/chai": "^4.2.9",
 		"@types/ldapjs": "^1.0.5",
