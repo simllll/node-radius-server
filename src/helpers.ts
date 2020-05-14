@@ -30,7 +30,7 @@ export const newDeferredPromise = (): IDeferredPromise => {
 		return {
 			promise: P,
 			resolve: fResolve,
-			reject: fReject
+			reject: fReject,
 		};
 	}
 
@@ -38,4 +38,4 @@ export const newDeferredPromise = (): IDeferredPromise => {
 };
 
 export const delay = (timeout: number) =>
-	new Promise(resolve => setTimeout(() => resolve(), timeout));
+	new Promise((resolve) => setTimeout(() => resolve(), timeout));

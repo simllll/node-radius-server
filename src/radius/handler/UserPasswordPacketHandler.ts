@@ -4,7 +4,7 @@ import {
 	IPacket,
 	IPacketHandler,
 	IPacketHandlerResult,
-	PacketResponseCode
+	PacketResponseCode,
 } from '../../types/PacketHandler';
 
 const log = debug('radius:user-pwd');
@@ -32,13 +32,13 @@ export class UserPasswordPacketHandler implements IPacketHandler {
 			// success
 			return {
 				code: PacketResponseCode.AccessAccept,
-				attributes: [['User-Name', username]]
+				attributes: [['User-Name', username]],
 			};
 		}
 
 		// Failed
 		return {
-			code: PacketResponseCode.AccessReject
+			code: PacketResponseCode.AccessReject,
 		};
 	}
 }

@@ -27,7 +27,7 @@ export class EAPPacketHandler implements IPacketHandler {
 
 		if (!this.eapConnectionStates.get(stateID)) {
 			this.eapConnectionStates.set(stateID, {
-				validMethods: this.eapMethods.filter(eap => eap.getEAPType() !== handlingType) // on init all registered eap methods are valid, we kick them out in case we get a NAK response
+				validMethods: this.eapMethods.filter((eap) => eap.getEAPType() !== handlingType), // on init all registered eap methods are valid, we kick them out in case we get a NAK response
 			});
 		}
 
@@ -78,7 +78,7 @@ export class EAPPacketHandler implements IPacketHandler {
 								supportedEAPMethods.push(supportedMethod);
 							}
 
-							currentState.validMethods = currentState.validMethods.filter(method => {
+							currentState.validMethods = currentState.validMethods.filter((method) => {
 								return supportedEAPMethods.includes(method.getEAPType()); // kick it out?
 							});
 							// save
@@ -93,7 +93,7 @@ export class EAPPacketHandler implements IPacketHandler {
 					// continue with responding a NAK and add rest of supported methods
 					// eslint-disable-next-line no-fallthrough
 					default: {
-						const eapMethod = this.eapMethods.find(method => {
+						const eapMethod = this.eapMethods.find((method) => {
 							return type === method.getEAPType();
 						});
 
@@ -108,7 +108,7 @@ export class EAPPacketHandler implements IPacketHandler {
 						}
 
 						// we do not support this auth type, ask for something we support
-						const serverSupportedMethods = currentState.validMethods.map(method =>
+						const serverSupportedMethods = currentState.validMethods.map((method) =>
 							method.getEAPType()
 						);
 

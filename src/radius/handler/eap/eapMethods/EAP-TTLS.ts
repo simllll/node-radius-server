@@ -14,7 +14,7 @@ import {
 	IPacketAttributes,
 	IPacketHandler,
 	IPacketHandlerResult,
-	PacketResponseCode
+	PacketResponseCode,
 } from '../../../../types/PacketHandler';
 import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../../helpers';
 import { IEAPMethod } from '../../../../types/EAPMethod';
@@ -108,7 +108,7 @@ export class EAPTTLS implements IEAPMethod {
 			0, // length (1/2)
 			0, //  length (2/2)
 			msgType, // 1 = identity, 21 = EAP-TTLS, 2 = notificaiton, 4 = md5-challenge, 3 = NAK
-			flags // flags: 000000 (L include lenghts, M .. more to come)
+			flags, // flags: 000000 (L include lenghts, M .. more to come)
 		]);
 
 		// append length
@@ -132,7 +132,7 @@ export class EAPTTLS implements IEAPMethod {
 			dataLength: (data && data.byteLength) || 0,
 			msgType: msgType.toString(10),
 			flags: `00000000${flags.toString(2)}`.substr(-8),
-			data
+			data,
 		});
 
 		if (dataToQueue) {
@@ -161,7 +161,7 @@ export class EAPTTLS implements IEAPMethod {
 			if (resBuffer.length > 0) {
 				attributes.push([
 					'EAP-Message',
-					resBuffer.slice(sentDataSize, sentDataSize + MAX_RADIUS_ATTRIBUTE_SIZE)
+					resBuffer.slice(sentDataSize, sentDataSize + MAX_RADIUS_ATTRIBUTE_SIZE),
 				]);
 				sentDataSize += MAX_RADIUS_ATTRIBUTE_SIZE;
 			}
@@ -169,7 +169,7 @@ export class EAPTTLS implements IEAPMethod {
 
 		return {
 			code: PacketResponseCode.AccessChallenge,
-			attributes
+			attributes,
 		};
 	}
 
@@ -212,7 +212,7 @@ export class EAPTTLS implements IEAPMethod {
 			// R
 			// reserved: flags & 0b00011000,
 			// V
-			version: flags & 0b00000111
+			version: flags & 0b00000111,
 		};
 
 		let msglength;
@@ -226,14 +226,14 @@ export class EAPTTLS implements IEAPMethod {
 			decodedFlags,
 			identifier,
 			msglength,
-			data
+			data,
 			// dataStr: data.toString()
 		});
 
 		return {
 			decodedFlags,
 			msglength,
-			data
+			data,
 		};
 	}
 
@@ -247,7 +247,7 @@ export class EAPTTLS implements IEAPMethod {
 			success ? 3 : 4, // 3.. success, 4... failure
 			identifier + 1,
 			0, // length (1/2)
-			4 //  length (2/2)
+			4, //  length (2/2)
 		]);
 
 		const attributes: any[] = [];
@@ -268,13 +268,13 @@ export class EAPTTLS implements IEAPMethod {
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[[16, encodeTunnelPW(keyingMaterial.slice(64), packet.authenticator, secret)]]
+				[[16, encodeTunnelPW(keyingMaterial.slice(64), packet.authenticator, secret)]],
 			]); //  MS-MPPE-Send-Key
 
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[[17, encodeTunnelPW(keyingMaterial.slice(0, 64), packet.authenticator, secret)]]
+				[[17, encodeTunnelPW(keyingMaterial.slice(0, 64), packet.authenticator, secret)]],
 			]); // MS-MPPE-Recv-Key
 		} else {
 			console.error(
@@ -284,7 +284,7 @@ export class EAPTTLS implements IEAPMethod {
 
 		return {
 			code: success ? PacketResponseCode.AccessAccept : PacketResponseCode.AccessReject,
-			attributes
+			attributes,
 		};
 	}
 
@@ -338,7 +338,7 @@ export class EAPTTLS implements IEAPMethod {
 
 			// build attributes for packet handler
 			const attributes: IPacketAttributes = {};
-			AVPs.forEach(avp => {
+			AVPs.forEach((avp) => {
 				attributes[attr_id_to_name(avp.type)] = avp.data;
 			});
 
@@ -347,7 +347,7 @@ export class EAPTTLS implements IEAPMethod {
 			// handle incoming package via inner tunnel
 			const result = await this.innerTunnel.handlePacket(
 				{
-					attributes
+					attributes,
 				},
 				this.getEAPType()
 			);
@@ -367,15 +367,15 @@ export class EAPTTLS implements IEAPMethod {
 							...packet,
 							attributes: {
 								...packet.attributes,
-								...this.transformAttributesArrayToMap(result.attributes)
-							}
+								...this.transformAttributesArrayToMap(result.attributes),
+							},
 						}
 					)
 				);
 				return;
 			}
 
-			const eapMessage = result.attributes?.find(attr => attr[0] === 'EAP-Message');
+			const eapMessage = result.attributes?.find((attr) => attr[0] === 'EAP-Message');
 			if (!eapMessage) {
 				throw new Error('no eap message found');
 			}
@@ -456,7 +456,7 @@ export class EAPTTLS implements IEAPMethod {
 				// L
 				V: !!(flags & 0b10000000),
 				// M
-				M: !!(flags & 0b01000000)
+				M: !!(flags & 0b01000000),
 			};
 
 			// const length = buffer.slice(5, 8).readUInt16BE(0); // actually a Int24BE
@@ -478,7 +478,7 @@ export class EAPTTLS implements IEAPMethod {
 				decodedFlags,
 				length,
 				vendorId,
-				data
+				data,
 			});
 
 			// ensure length is a multiple of 4 octect

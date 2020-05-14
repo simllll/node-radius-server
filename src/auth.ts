@@ -1,6 +1,8 @@
 import * as NodeCache from 'node-cache';
+import { Cache, ExpirationStrategy, MemoryStorage } from '@hokify/node-ts-cache';
 import { IAuthentication } from './types/Authentication';
 
+const cacheStrategy = new ExpirationStrategy(new MemoryStorage());
 /**
  * this is just a simple abstraction to provide
  * an application layer for caching credentials
@@ -10,6 +12,7 @@ export class Authentication implements IAuthentication {
 
 	constructor(private authenticator: IAuthentication) {}
 
+	@Cache(cacheStrategy, { ttl: 60000 })
 	async authenticate(username: string, password: string): Promise<boolean> {
 		const cacheKey = `usr:${username}|pwd:${password}`;
 		const fromCache = this.cache.get(cacheKey) as undefined | boolean;

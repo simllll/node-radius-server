@@ -48,9 +48,9 @@ export class IMAPAuth implements IAuthentication {
 					user: username,
 					password,
 					tlsOptions: {
-						servername: this.host // SNI (needs to be set for gmail)
-					}
-				}
+						servername: this.host, // SNI (needs to be set for gmail)
+					},
+				},
 			});
 
 			success = true;

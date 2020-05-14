@@ -8,7 +8,7 @@ describe('test smtp auth', () => {
 			host: 'smtp.gmail.com',
 			port: 465,
 			useSecureTransport: true,
-			validHosts: ['gmail.com']
+			validHosts: ['gmail.com'],
 		});
 
 		const result = await auth.authenticate('username', 'password');

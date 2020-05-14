@@ -15,7 +15,7 @@ export class EAPGTC implements IEAPMethod {
 	}
 
 	extractValue(msg: Buffer) {
-		let tillBinary0 = msg.findIndex(v => v === 0) || msg.length;
+		let tillBinary0 = msg.findIndex((v) => v === 0) || msg.length;
 		if (tillBinary0 < 0) {
 			tillBinary0 = msg.length - 1;
 		}
@@ -52,7 +52,7 @@ export class EAPGTC implements IEAPMethod {
 
 		return {
 			code: success ? PacketResponseCode.AccessAccept : PacketResponseCode.AccessReject,
-			attributes: (success && [['User-Name', username]]) || undefined
+			attributes: (success && [['User-Name', username]]) || undefined,
 		};
 	}
 }

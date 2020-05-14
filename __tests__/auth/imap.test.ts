@@ -8,7 +8,7 @@ describe('test imap auth', () => {
 			host: 'imap.gmail.com',
 			port: 993,
 			useSecureTransport: true,
-			validHosts: ['gmail.com']
+			validHosts: ['gmail.com'],
 		});
 
 		const result = await auth.authenticate('username', 'password');

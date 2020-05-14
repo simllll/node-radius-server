@@ -34,11 +34,11 @@ export class RadiusService {
 				packet,
 				code: response.code,
 				secret: this.secret,
-				attributes: response.attributes
+				attributes: response.attributes,
 			}),
 			// if message is accept or reject, we conside this as final message
 			// this means we do not expect a reponse from the client again (acknowledgement for package)
-			expectAcknowledgment: response.code === PacketResponseCode.AccessChallenge
+			expectAcknowledgment: response.code === PacketResponseCode.AccessChallenge,
 		};
 	}
 }

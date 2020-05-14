@@ -11,7 +11,7 @@ const log = debug('radius:tls');
 
 // https://nodejs.org/api/tls.html
 const tlsOptions: tls.SecureContextOptions = {
-	...config.certificate
+	...config.certificate,
 };
 log('tlsOptions', tlsOptions);
 const secureContext = createSecureContext(tlsOptions);
@@ -33,7 +33,7 @@ export function startTLSServer(): ITLSServer {
 		// enableTrace: true,
 		rejectUnauthorized: false,
 		// handshakeTimeout: 10,
-		requestCert: false
+		requestCert: false,
 	});
 	const encrypted = duplexpair.socket2;
 
@@ -90,7 +90,7 @@ export function startTLSServer(): ITLSServer {
 			emitter.emit('end');
 		});
 
-		cleartext.on('keylog', line => {
+		cleartext.on('keylog', (line) => {
 			log('############ KEYLOG #############', line);
 			// cleartext.getTicketKeys()
 		});
@@ -109,7 +109,7 @@ export function startTLSServer(): ITLSServer {
 
 	return {
 		events: emitter,
-		tls: cleartext
+		tls: cleartext,
 	};
 }
 

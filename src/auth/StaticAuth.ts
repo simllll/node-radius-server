@@ -16,7 +16,7 @@ export class StaticAuth implements IAuthentication {
 
 	async authenticate(username: string, password: string) {
 		return !!this.validCredentials.find(
-			credential => credential.username === username && credential.password === password
+			(credential) => credential.username === username && credential.password === password
 		);
 	}
 }

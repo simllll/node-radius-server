@@ -47,8 +47,8 @@ export class SMTPAuth implements IAuthentication {
 			port: this.port,
 			secure: this.useSecureTransport,
 			tlsOptions: {
-				servername: this.host // SNI (needs to be set for gmail)
-			}
+				servername: this.host, // SNI (needs to be set for gmail)
+			},
 		});
 
 		let success = false;

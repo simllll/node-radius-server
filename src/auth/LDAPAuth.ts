@@ -33,7 +33,7 @@ export class LDAPAuth implements IAuthentication {
 		const tlsOptions = {
 			key: fs.readFileSync(config.tls.keyFile),
 			cert: fs.readFileSync(config.tls.certFile),
-			...config.tlsOptions
+			...config.tlsOptions,
 		};
 
 		this.ldap = new LdapAuth({
@@ -41,16 +41,16 @@ export class LDAPAuth implements IAuthentication {
 			searchBase: config.base,
 			tlsOptions,
 			searchFilter: config.searchFilter || '(uid={{username}})',
-			reconnect: true
+			reconnect: true,
 		});
-		this.ldap.on('error', function(err) {
+		this.ldap.on('error', function (err) {
 			console.error('LdapAuth: ', err);
 		});
 	}
 
 	async authenticate(username: string, password: string) {
 		const authResult: boolean = await new Promise((resolve, reject) => {
-			this.ldap.authenticate(username, password, function(err, user) {
+			this.ldap.authenticate(username, password, function (err, user) {
 				if (err) {
 					resolve(false);
 					console.error('ldap error', err);

@@ -42,12 +42,12 @@ export class GoogleLDAPAuth implements IAuthentication {
 			key: fs.readFileSync(config.tls.keyFile),
 			cert: fs.readFileSync(config.tls.certFile),
 			servername: 'ldap.google.com',
-			...config.tlsOptions
+			...config.tlsOptions,
 		};
 
 		this.config = {
 			url: 'ldaps://ldap.google.com:636',
-			tlsOptions
+			tlsOptions,
 		};
 
 		this.fetchDNs();
@@ -57,7 +57,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 		const dns: { [key: string]: string } = {};
 
 		await new Promise((resolve, reject) => {
-			const ldapDNClient = createClient(this.config).on('error', error => {
+			const ldapDNClient = createClient(this.config).on('error', (error) => {
 				console.error('Error in ldap', error);
 				reject(error);
 			});
@@ -65,7 +65,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 			ldapDNClient.search(
 				this.base,
 				{
-					scope: 'sub'
+					scope: 'sub',
 				},
 				(err, res) => {
 					if (err) {
@@ -73,24 +73,24 @@ export class GoogleLDAPAuth implements IAuthentication {
 						return;
 					}
 
-					res.on('searchEntry', function(entry) {
+					res.on('searchEntry', function (entry) {
 						// log('entry: ' + JSON.stringify(entry.object));
-						usernameFields.forEach(field => {
+						usernameFields.forEach((field) => {
 							const index = entry.object[field] as string;
 							dns[index] = entry.object.dn;
 						});
 					});
 
-					res.on('searchReference', function(referral) {
+					res.on('searchReference', function (referral) {
 						log(`referral: ${referral.uris.join()}`);
 					});
 
-					res.on('error', function(ldapErr) {
+					res.on('error', function (ldapErr) {
 						console.error(`error: ${ldapErr.message}`);
 						reject();
 					});
 
-					res.on('end', result => {
+					res.on('end', (result) => {
 						log(`ldap status: ${result?.status}`);
 
 						// replace with new dns

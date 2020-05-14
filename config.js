@@ -14,9 +14,9 @@ module.exports = {
 		key: [
 			{
 				pem: fs.readFileSync(path.join(SSL_CERT_DIRECTORY, '/server.key')),
-				passphrase: 'whatever2020'
-			}
-		]
+				passphrase: 'whatever2020',
+			},
+		],
 	},
 
 	// GoogleLDAPAuth (optimized for google auth)
@@ -26,9 +26,9 @@ module.exports = {
 		// get your keys from http://admin.google.com/ -> Apps -> LDAP -> Client
 		tls: {
 			keyFile: 'ldap.gsuite.key',
-			certFile: 'ldap.gsuite.crt'
-		}
-	}
+			certFile: 'ldap.gsuite.crt',
+		},
+	},
 
 	/** LDAP AUTH 
 	authentication: 'LDAPAuth',

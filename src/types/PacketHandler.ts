@@ -1,7 +1,7 @@
 export enum PacketResponseCode {
 	AccessChallenge = 'Access-Challenge',
 	AccessAccept = 'Access-Accept',
-	AccessReject = 'Access-Reject'
+	AccessReject = 'Access-Reject',
 }
 
 export interface IPacketHandlerResult {

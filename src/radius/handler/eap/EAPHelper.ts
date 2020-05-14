@@ -15,7 +15,7 @@ export function buildEAP(identifier: number, msgType: number, data?: Buffer) {
 		identifier,
 		0, // length (1/2)
 		0, //  length (2/2)
-		msgType // 1 = identity, 21 = EAP-TTLS, 2 = notificaiton, 4 = md5-challenge, 3 = NAK
+		msgType, // 1 = identity, 21 = EAP-TTLS, 2 = notificaiton, 4 = md5-challenge, 3 = NAK
 	]);
 
 	const resBuffer = data ? Buffer.concat([buffer, data]) : buffer;
@@ -38,7 +38,7 @@ export function buildEAPResponse(
 ): IPacketHandlerResult {
 	return {
 		code: PacketResponseCode.AccessChallenge,
-		attributes: [['EAP-Message', buildEAP(identifier, msgType, data)]]
+		attributes: [['EAP-Message', buildEAP(identifier, msgType, data)]],
 	};
 }
 
@@ -74,6 +74,6 @@ export function decodeEAPHeader(msg: Buffer) {
 		identifier,
 		length,
 		type,
-		data
+		data,
 	};
 }

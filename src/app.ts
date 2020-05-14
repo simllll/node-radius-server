@@ -12,7 +12,7 @@ const testSocket = startTLSServer();
 if (typeof (testSocket.tls as any).exportKeyingMaterial !== 'function') {
 	console.error(`UNSUPPORTED NODE VERSION (${process.version}) FOUND!!`);
 
-	console.log('run "sudo npx n nightly" to get nightly build of node js.');
+	console.log('min version supported is node js 14. run "sudo npx n 14"');
 	process.exit(-1);
 }
 
@@ -23,7 +23,7 @@ const { argv } = yargs
 		port: config.port || 1812,
 		s: config.secret || 'testing123',
 		authentication: config.authentication,
-		authenticationOptions: config.authenticationOptions
+		authenticationOptions: config.authenticationOptions,
 	})
 	.describe('port', 'RADIUS server listener port')
 	.alias('s', 'secret')
