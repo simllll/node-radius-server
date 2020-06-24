@@ -30,30 +30,30 @@
 	"preferGlobal": true,
 	"main": "dist/app.js",
 	"dependencies": {
-		"@hokify/node-ts-cache": "^5.1.4",
+		"@hokify/node-ts-cache": "^5.1.7",
 		"debug": "^4.1.1",
 		"imap-simple": "^5.0.0",
 		"ldapauth-fork": "^4.3.3",
-		"ldapjs": "^1.0.2",
+		"ldapjs": "^2.0.0",
 		"native-duplexpair": "^1.0.0",
-		"node-cache": "^5.1.0",
+		"node-cache": "^5.1.1",
 		"radius": "~1.1.4",
 		"smtp-client": "^0.3.1",
 		"yargs": "~15.3.1"
 	},
 	"license": "GPLv3",
 	"devDependencies": {
-		"ts-node": "^8.10.1",
+		"ts-node": "^8.10.2",
 		"standard-version": "^8.0.0",
-		"@hokify/eslint-config": "^0.4.11",
+		"@hokify/eslint-config": "^0.4.25",
 		"@types/chai": "^4.2.11",
-		"@types/ldapjs": "^1.0.7",
+		"@types/ldapjs": "^1.0.8",
 		"@types/mocha": "^7.0.2",
 		"@types/radius": "0.0.28",
 		"chai": "^4.2.0",
-		"eslint": "^7.0.0",
-		"mocha": "^7.1.2",
+		"eslint": "^7.3.1",
+		"mocha": "^8.0.1",
 		"prettier": "^2.0.5",
-		"typescript": "^3.9.2"
+		"typescript": "^3.9.5"
 	}
 }
