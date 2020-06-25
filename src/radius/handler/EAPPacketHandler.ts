@@ -3,7 +3,7 @@
 import * as NodeCache from 'node-cache';
 import debug from 'debug';
 import { makeid } from '../../helpers';
-import { IPacket, IPacketHandler, IPacketHandlerResult, PacketResponseCode } from '../../types/PacketHandler';
+import { IPacket, IPacketHandler, IPacketHandlerResult } from '../../types/PacketHandler';
 import { IEAPMethod } from '../../types/EAPMethod';
 import { buildEAPResponse, decodeEAPHeader } from './eap/EAPHelper';
 
@@ -130,7 +130,12 @@ export class EAPPacketHandler implements IPacketHandler {
 			// silently ignore;
 			return {};
 		} catch (err) {
-			console.error('decoding of (generic) EAP package failed', msg, err);
+			console.error(
+				'decoding of (generic) EAP package failed',
+				msg,
+				err,
+				this.eapConnectionStates.get(stateID)
+			);
 			return {};
 		}
 	}
