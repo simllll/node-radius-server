@@ -300,113 +300,120 @@ export class EAPTTLS implements IEAPMethod {
 			return {};
 		}
 		this.lastProcessedIdentifier.set(stateID, identifier);
-		const { data } = this.decodeTTLSMessage(msg);
+		try {
+			const { data } = this.decodeTTLSMessage(msg);
 
-		// check if no data package is there and we have something in the queue, if so.. empty the queue first
-		if (!data || data.length === 0) {
-			const queuedData = this.queueData.get(stateID);
-			if (queuedData instanceof Buffer && queuedData.length > 0) {
-				log(`returning queued data for ${stateID}`);
-				return this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, queuedData, false);
+			// check if no data package is there and we have something in the queue, if so.. empty the queue first
+			if (!data || data.length === 0) {
+				const queuedData = this.queueData.get(stateID);
+				if (queuedData instanceof Buffer && queuedData.length > 0) {
+					log(`returning queued data for ${stateID}`);
+					return this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, queuedData, false);
+				}
+
+				log(`empty data queue for ${stateID}`);
+				return {};
 			}
 
-			log(`empty data queue for ${stateID}`);
-			return {};
-		}
+			let connection = this.openTLSSockets.get(stateID) as ITLSServer;
 
-		let connection = this.openTLSSockets.get(stateID) as ITLSServer;
+			if (!connection) {
+				connection = startTLSServer();
+				this.openTLSSockets.set(stateID, connection);
 
-		if (!connection) {
-			connection = startTLSServer();
-			this.openTLSSockets.set(stateID, connection);
+				connection.events.on('end', () => {
+					// cleanup socket
+					log('ENDING SOCKET');
+					this.openTLSSockets.del(stateID);
+				});
+			}
 
-			connection.events.on('end', () => {
-				// cleanup socket
-				log('ENDING SOCKET');
-				this.openTLSSockets.del(stateID);
-			});
-		}
+			const sendResponsePromise = newDeferredPromise();
 
-		const sendResponsePromise = newDeferredPromise();
+			const incomingMessageHandler = async (incomingData: Buffer) => {
+				const ret: any = {};
+				ret.attributes = {};
+				ret.raw_attributes = [];
 
-		const incomingMessageHandler = async (incomingData: Buffer) => {
-			const ret: any = {};
-			ret.attributes = {};
-			ret.raw_attributes = [];
+				const AVPs = this.decodeAVPs(incomingData);
 
-			const AVPs = this.decodeAVPs(incomingData);
+				// build attributes for packet handler
+				const attributes: IPacketAttributes = {};
+				AVPs.forEach((avp) => {
+					attributes[attr_id_to_name(avp.type)] = avp.data;
+				});
 
-			// build attributes for packet handler
-			const attributes: IPacketAttributes = {};
-			AVPs.forEach((avp) => {
-				attributes[attr_id_to_name(avp.type)] = avp.data;
-			});
+				attributes.State = `${stateID}-inner`;
 
-			attributes.State = `${stateID}-inner`;
-
-			// handle incoming package via inner tunnel
-			const result = await this.innerTunnel.handlePacket(
-				{
-					attributes,
-				},
-				this.getEAPType()
-			);
-
-			log('inner tunnel result', result);
-
-			if (
-				result.code === PacketResponseCode.AccessReject ||
-				result.code === PacketResponseCode.AccessAccept
-			) {
-				sendResponsePromise.resolve(
-					this.authResponse(
-						identifier,
-						result.code === PacketResponseCode.AccessAccept,
-						connection.tls,
-						{
-							...packet,
-							attributes: {
-								...packet.attributes,
-								...this.transformAttributesArrayToMap(result.attributes),
-							},
-						}
-					)
+				// handle incoming package via inner tunnel
+				const result = await this.innerTunnel.handlePacket(
+					{
+						attributes,
+					},
+					this.getEAPType()
 				);
-				return;
-			}
 
-			const eapMessage = result.attributes?.find((attr) => attr[0] === 'EAP-Message');
-			if (!eapMessage) {
-				throw new Error('no eap message found');
-			}
+				log('inner tunnel result', result);
 
-			connection.events.emit(
-				'encrypt',
-				this.buildAVP(attr_name_to_id('EAP-Message'), eapMessage[1] as Buffer)
-			);
-		};
+				if (
+					result.code === PacketResponseCode.AccessReject ||
+					result.code === PacketResponseCode.AccessAccept
+				) {
+					sendResponsePromise.resolve(
+						this.authResponse(
+							identifier,
+							result.code === PacketResponseCode.AccessAccept,
+							connection.tls,
+							{
+								...packet,
+								attributes: {
+									...packet.attributes,
+									...this.transformAttributesArrayToMap(result.attributes),
+								},
+							}
+						)
+					);
+					return;
+				}
 
-		const responseHandler = (encryptedResponseData: Buffer) => {
-			// send back...
-			sendResponsePromise.resolve(
-				this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData)
-			);
-		};
+				const eapMessage = result.attributes?.find((attr) => attr[0] === 'EAP-Message');
+				if (!eapMessage) {
+					throw new Error('no eap message found');
+				}
 
-		// register event listeners
-		connection.events.on('incoming', incomingMessageHandler);
-		connection.events.on('response', responseHandler);
+				connection.events.emit(
+					'encrypt',
+					this.buildAVP(attr_name_to_id('EAP-Message'), eapMessage[1] as Buffer)
+				);
+			};
 
-		// emit data to tls server
-		connection.events.emit('decrypt', data);
-		const responseData = await sendResponsePromise.promise;
+			const responseHandler = (encryptedResponseData: Buffer) => {
+				// send back...
+				sendResponsePromise.resolve(
+					this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData)
+				);
+			};
 
-		// cleanup
-		connection.events.off('incoming', incomingMessageHandler);
-		connection.events.off('response', responseHandler);
+			// register event listeners
+			connection.events.on('incoming', incomingMessageHandler);
+			connection.events.on('response', responseHandler);
 
-		// send response
-		return responseData; // this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData);
+			// emit data to tls server
+			connection.events.emit('decrypt', data);
+			const responseData = await sendResponsePromise.promise;
+
+			// cleanup
+			connection.events.off('incoming', incomingMessageHandler);
+			connection.events.off('response', responseHandler);
+
+			// send response
+			return responseData; // this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData);
+		} catch (err) {
+			console.error('decoding of EAP-TTLS package failed', msg, err);
+			return {
+				code: PacketResponseCode.AccessReject,
+			};
+		}
 	}
 
 	private transformAttributesArrayToMap(attributes: [string, Buffer | string][] | undefined) {

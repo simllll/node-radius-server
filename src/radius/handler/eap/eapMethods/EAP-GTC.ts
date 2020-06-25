@@ -37,22 +37,29 @@ export class EAPGTC implements IEAPMethod {
 	): Promise<IPacketHandlerResult> {
 		const username = identity; // this.loginData.get(stateID) as Buffer | undefined;
 
-		const { data } = decodeEAPHeader(msg);
+		try {
+			const { data } = decodeEAPHeader(msg);
 
-		const token = this.extractValue(data);
+			const token = this.extractValue(data);
 
-		if (!username) {
-			throw new Error('no username');
+			if (!username) {
+				throw new Error('no username');
+			}
+
+			log('username', username, username.toString());
+			log('token', token, token.toString());
+
+			const success = await this.authentication.authenticate(username.toString(), token.toString());
+
+			return {
+				code: success ? PacketResponseCode.AccessAccept : PacketResponseCode.AccessReject,
+				attributes: (success && [['User-Name', username]]) || undefined,
+			};
+		} catch (err) {
+			console.error('decoding of EAP-GTC package failed', msg, err);
+			return {
+				code: PacketResponseCode.AccessReject,
+			};
 		}
-
-		log('username', username, username.toString());
-		log('token', token, token.toString());
-
-		const success = await this.authentication.authenticate(username.toString(), token.toString());
-
-		return {
-			code: success ? PacketResponseCode.AccessAccept : PacketResponseCode.AccessReject,
-			attributes: (success && [['User-Name', username]]) || undefined,
-		};
 	}
 }
