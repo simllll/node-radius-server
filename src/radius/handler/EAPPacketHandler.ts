@@ -32,7 +32,11 @@ export class EAPPacketHandler implements IPacketHandler {
 		}
 
 		// EAP MESSAGE
-		const msg = packet.attributes['EAP-Message'] as Buffer;
+		let msg = packet.attributes['EAP-Message'] as Buffer;
+
+		if (Array.isArray(msg)) {
+			msg = Buffer.concat(msg);
+		}
 
 		try {
 			const { code, type, identifier, data } = decodeEAPHeader(msg);
