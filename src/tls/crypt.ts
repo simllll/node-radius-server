@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import * as DuplexPair from 'native-duplexpair';
 import debug from 'debug';
 import * as NodeCache from 'node-cache';
+import * as constants from 'constants';
 import * as config from '../../config';
 
 const log = debug('radius:tls');
@@ -12,6 +13,7 @@ const log = debug('radius:tls');
 // https://nodejs.org/api/tls.html
 const tlsOptions: tls.SecureContextOptions = {
 	...config.certificate,
+	secureOptions: constants.SSL_OP_NO_TICKET,
 };
 log('tlsOptions', tlsOptions);
 const secureContext = createSecureContext(tlsOptions);
