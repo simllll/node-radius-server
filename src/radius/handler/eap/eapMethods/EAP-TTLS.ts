@@ -227,7 +227,7 @@ export class EAPTTLS implements IEAPMethod {
 			identifier,
 			msglengthBuffer: msg.length,
 			msglength,
-			data
+			data,
 			// dataStr: data.toString()
 		});
 
@@ -396,13 +396,15 @@ export class EAPTTLS implements IEAPMethod {
 				);
 			};
 
+			const resetIdentifier = () => {
+				log('secured, resetting last identifier due to weird MS bug');
+				this.lastProcessedIdentifier.set(stateID, undefined);
+			};
+
 			// register event listeners
 			connection.events.on('incoming', incomingMessageHandler);
 			connection.events.on('response', responseHandler);
-			connection.events.on('secured', () => {
-				log('secured, resetting last identifier due to weird MS bug');
-				this.lastProcessedIdentifier.set(stateID, undefined);
-			});
+			connection.events.on('secured', resetIdentifier);
 
 			// emit data to tls server
 			connection.events.emit('decrypt', data);
@@ -411,7 +413,9 @@ export class EAPTTLS implements IEAPMethod {
 			// cleanup
 			connection.events.off('incoming', incomingMessageHandler);
 			connection.events.off('response', responseHandler);
-			connection.events.off('secured', responseHandler);
+			connection.events.off('secured', resetIdentifier);
+
+			// connection.events.off('secured');
 
 			// send response
 			return responseData; // this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData);
