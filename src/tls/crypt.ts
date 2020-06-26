@@ -96,6 +96,7 @@ export function startTLSServer(): ITLSServer {
 		});
 
 		log('*********** new TLS connection established / secured ********');
+		emitter.emit('secured');
 	});
 
 	cleartext.on('error', (err?: Error) => {

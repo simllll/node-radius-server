@@ -219,14 +219,15 @@ export class EAPTTLS implements IEAPMethod {
 		if (decodedFlags.lengthIncluded) {
 			msglength = msg.slice(6, 10).readUInt32BE(0); // .readDoubleLE(0); // .toString('hex');
 		}
-		const data = msg.slice(decodedFlags.lengthIncluded ? 10 : 6, msg.length);
+		const data = msg.slice(decodedFlags.lengthIncluded ? 10 : 6).slice(0, msglength);
 
 		log('>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS', {
 			flags: `00000000${flags.toString(2)}`.substr(-8),
 			decodedFlags,
 			identifier,
+			msglengthBuffer: msg.length,
 			msglength,
-			data,
+			data
 			// dataStr: data.toString()
 		});
 
@@ -388,6 +389,7 @@ export class EAPTTLS implements IEAPMethod {
 			};
 
 			const responseHandler = (encryptedResponseData: Buffer) => {
+				log('complete');
 				// send back...
 				sendResponsePromise.resolve(
 					this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData)
@@ -397,6 +399,7 @@ export class EAPTTLS implements IEAPMethod {
 			// register event listeners
 			connection.events.on('incoming', incomingMessageHandler);
 			connection.events.on('response', responseHandler);
+			connection.events.on('secured', responseHandler);
 
 			// emit data to tls server
 			connection.events.emit('decrypt', data);
@@ -405,6 +408,7 @@ export class EAPTTLS implements IEAPMethod {
 			// cleanup
 			connection.events.off('incoming', incomingMessageHandler);
 			connection.events.off('response', responseHandler);
+			connection.events.off('secured', responseHandler);
 
 			// send response
 			return responseData; // this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData);
@@ -473,7 +477,7 @@ export class EAPTTLS implements IEAPMethod {
 
 			let vendorId;
 			let data;
-			if (flags & 0b010000000) {
+			if (decodedFlags.V) {
 				// V flag set
 				vendorId = currentBuffer.slice(8, 12).readUInt32BE(0);
 				data = currentBuffer.slice(12, length);
