@@ -413,6 +413,8 @@ export class EAPTTLS implements IEAPMethod {
 			return {
 				code: PacketResponseCode.AccessReject,
 			};
+		} finally {
+			this.lastProcessedIdentifier.set(stateID, undefined);
 		}
 	}
 
