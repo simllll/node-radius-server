@@ -399,7 +399,9 @@ export class EAPTTLS implements IEAPMethod {
 			// register event listeners
 			connection.events.on('incoming', incomingMessageHandler);
 			connection.events.on('response', responseHandler);
-			connection.events.on('secured', responseHandler);
+			connection.events.on('secured', () => {
+				connection.events.emit('decrypt', data);
+			});
 
 			// emit data to tls server
 			connection.events.emit('decrypt', data);

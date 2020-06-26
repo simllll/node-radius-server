@@ -13,7 +13,6 @@ const log = debug('radius:tls');
 // https://nodejs.org/api/tls.html
 const tlsOptions: tls.SecureContextOptions = {
 	...config.certificate,
-	secureOptions: constants.SSL_OP_NO_TICKET,
 };
 log('tlsOptions', tlsOptions);
 const secureContext = createSecureContext(tlsOptions);
