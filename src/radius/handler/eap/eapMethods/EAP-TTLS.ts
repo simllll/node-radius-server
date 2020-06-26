@@ -400,7 +400,8 @@ export class EAPTTLS implements IEAPMethod {
 			connection.events.on('incoming', incomingMessageHandler);
 			connection.events.on('response', responseHandler);
 			connection.events.on('secured', () => {
-				connection.events.emit('decrypt', data);
+				log('secured, resetting last identifier due to weird MS bug');
+				this.lastProcessedIdentifier.set(stateID, undefined);
 			});
 
 			// emit data to tls server
