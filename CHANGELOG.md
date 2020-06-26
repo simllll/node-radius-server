@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.5](https://github.com/simllll/node-radius-server/compare/v1.1.4...v1.1.5) (2020-06-26)
+
+
+### Bug Fixes
+
+* **eap:** catch decoding errors ([97ea3fa](https://github.com/simllll/node-radius-server/commit/97ea3fad1d8d1d79eab38ee5e45e17ef6ed20caa))
+* **eap:** concat buffers if they are an array ([3d03658](https://github.com/simllll/node-radius-server/commit/3d03658a43a924017ad5da84599f57a21b3ae27e))
+* **eap:** output state on error ([e71f0b3](https://github.com/simllll/node-radius-server/commit/e71f0b3d804070f67ad2d42880c516ce612ee7b0))
+* **eap-ttls:** reset last processed identifier ([7179c16](https://github.com/simllll/node-radius-server/commit/7179c1682d33ead0e00d7aae17a97428f1fa4ea5))
+
 ### [1.1.4](https://github.com/simllll/node-radius-server/compare/v1.1.3...v1.1.4) (2020-06-24)
 
 ### [1.1.3](https://github.com/simllll/node-radius-server/compare/v1.1.2...v1.1.3) (2020-05-14)
