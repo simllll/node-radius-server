@@ -48,7 +48,7 @@
 		"@hokify/eslint-config": "^0.4.25",
 		"@types/chai": "^4.2.11",
 		"@types/ldapjs": "^1.0.8",
-		"@types/mocha": "^7.0.2",
+		"@types/mocha": "^8.0.1",
 		"@types/radius": "0.0.28",
 		"chai": "^4.2.0",
 		"eslint": "^7.3.1",
