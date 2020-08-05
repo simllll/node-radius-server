@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.7](https://github.com/simllll/node-radius-server/compare/v1.1.5...v1.1.7) (2020-08-05)
+
+
+### Bug Fixes
+
+* session resumptions + google ldap auth ([66fbcf4](https://github.com/simllll/node-radius-server/commit/66fbcf4ca83cc6c3813b0015c0e2d8f69c8db6e6))
+
 ### [1.1.6](https://github.com/simllll/node-radius-server/compare/v1.1.5...v1.1.6) (2020-08-05)
 
 
