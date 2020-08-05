@@ -46,8 +46,6 @@ interface IAVPEntry {
 export class EAPTTLS implements IEAPMethod {
 	private lastProcessedIdentifier = new NodeCache({ useClones: false, stdTTL: 60 });
 
-	private activeSessions = new NodeCache({ useClones: false, stdTTL: 86400 });
-
 	// { [key: string]: Buffer } = {};
 	private queueData = new NodeCache({ useClones: false, stdTTL: 60 }); // queue data maximum for 60 seconds
 
@@ -246,8 +244,6 @@ export class EAPTTLS implements IEAPMethod {
 		socket: tls.TLSSocket,
 		packet: IPacket
 	): IPacketHandlerResult {
-		this.activeSessions.set(packet.attributes['Acct-Session-Id'] as string, true);
-
 		const buffer = Buffer.from([
 			success ? 3 : 4, // 3.. success, 4... failure
 			identifier + 1,

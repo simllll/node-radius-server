@@ -35,10 +35,10 @@ export class EAPPacketHandler implements IPacketHandler {
 		let msg = packet.attributes['EAP-Message'] as Buffer;
 
 		if (Array.isArray(msg) && !(packet.attributes['EAP-Message'] instanceof Buffer)) {
-			log('multiple EAP Messages received, concat', msg.length);
+			// log('multiple EAP Messages received, concat', msg.length);
 			const allMsgs = msg as Buffer[];
 			msg = Buffer.concat(allMsgs);
-			log('final EAP Message', msg);
+			// log('final EAP Message', msg);
 		}
 
 		try {
