@@ -82,40 +82,43 @@ export function startTLSServer(): ITLSServer {
 		if (cipher) {
 			log(`TLS negotiated (${cipher.name}, ${cipher.version})`);
 		}
-
-		cleartext.on('data', (data: Buffer) => {
-			log('cleartext data', data, data.toString());
-			emitter.emit('incoming', data);
-		});
-
-		cleartext.once('close', (_data: Buffer) => {
-			log('cleartext close');
-			emitter.emit('end');
-		});
-
-		cleartext.on('newSession', (line) => {
-			log('############ newSession #############', line);
-		});
-
-		cleartext.on('resumeSession', (line) => {
-			log('############ resumeSession #############', line);
-		});
-
-		cleartext.on('session', (line) => {
-			log('############ session #############', line);
-		});
-
-		cleartext.on('tlsClientError', (line) => {
-			log('############ tlsClientError #############', line);
-		});
-
-		cleartext.on('keylog', (line) => {
-			log('############ KEYLOG #############', line);
-			// cleartext.getTicketKeys()
-		});
-
 		log('*********** new TLS connection established / secured ********');
 		emitter.emit('secured');
+	});
+
+	cleartext.on('data', (data: Buffer) => {
+		log('cleartext data', data, data.toString());
+		emitter.emit('incoming', data);
+	});
+
+	cleartext.once('close', (_data: Buffer) => {
+		log('cleartext close');
+		emitter.emit('end');
+	});
+
+	cleartext.on('newSession', (line) => {
+		log('############ newSession #############', line);
+	});
+
+	cleartext.on('resumeSession', (line) => {
+		log('############ resumeSession #############', line);
+	});
+
+	cleartext.on('session', (line) => {
+		log('############ session #############', line);
+	});
+
+	cleartext.on('secureConnection', (line) => {
+		log('############ secureConnection #############', line);
+	});
+
+	cleartext.on('tlsClientError', (line) => {
+		log('############ tlsClientError #############', line);
+	});
+
+	cleartext.on('keylog', (line) => {
+		log('############ KEYLOG #############', line);
+		// cleartext.getTicketKeys()
 	});
 
 	cleartext.on('error', (err?: Error) => {
