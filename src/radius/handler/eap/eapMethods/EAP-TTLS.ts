@@ -401,7 +401,11 @@ export class EAPTTLS implements IEAPMethod {
 			};
 
 			const checkExistingSession = () => {
-				log('secured, check cache, and if there is one, resposne accordingly');
+				log(
+					'secured, check cache, and if there is one, resposne accordingly',
+					packet,
+					packet.attributes['Acct-Session-Id']
+				);
 				if (
 					packet.attributes['Acct-Session-Id'] &&
 					this.activeSessions.get(packet.attributes['Acct-Session-Id'] as string)
@@ -412,7 +416,7 @@ export class EAPTTLS implements IEAPMethod {
 				} else {
 					log('cache does not exist');
 					// reset identifier and reject
-					sendResponsePromise.resolve(this.authResponse(identifier, false, connection.tls, packet));
+					// sendResponsePromise.resolve(this.authResponse(identifier, false, connection.tls, packet));
 					this.lastProcessedIdentifier.set(stateID, undefined);
 				}
 			};
