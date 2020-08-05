@@ -3,7 +3,7 @@
 /* eslint-disable no-bitwise */
 import * as tls from 'tls';
 import * as NodeCache from 'node-cache';
-// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { attr_id_to_name, attr_name_to_id } from 'radius';
 import debug from 'debug';
@@ -45,6 +45,8 @@ interface IAVPEntry {
 
 export class EAPTTLS implements IEAPMethod {
 	private lastProcessedIdentifier = new NodeCache({ useClones: false, stdTTL: 60 });
+
+	private activeSessions = new NodeCache({ useClones: false, stdTTL: 86400 });
 
 	// { [key: string]: Buffer } = {};
 	private queueData = new NodeCache({ useClones: false, stdTTL: 60 }); // queue data maximum for 60 seconds
@@ -244,6 +246,8 @@ export class EAPTTLS implements IEAPMethod {
 		socket: tls.TLSSocket,
 		packet: IPacket
 	): IPacketHandlerResult {
+		this.activeSessions.set(packet.attributes['Acct-Session-Id'] as string, true);
+
 		const buffer = Buffer.from([
 			success ? 3 : 4, // 3.. success, 4... failure
 			identifier + 1,
@@ -396,15 +400,25 @@ export class EAPTTLS implements IEAPMethod {
 				);
 			};
 
-			const resetIdentifier = () => {
-				log('secured, resetting last identifier due to weird MS bug');
-				this.lastProcessedIdentifier.set(stateID, undefined);
+			const checkExistingSession = () => {
+				log('secured, check cache, and if there is one, resposne accordingly');
+				if (
+					packet.attributes['Acct-Session-Id'] &&
+					this.activeSessions.get(packet.attributes['Acct-Session-Id'] as string)
+				) {
+					// valid session, good to go
+					sendResponsePromise.resolve(this.authResponse(identifier, true, connection.tls, packet));
+				} else {
+					// reset identifier and reject
+					sendResponsePromise.resolve(this.authResponse(identifier, false, connection.tls, packet));
+					this.lastProcessedIdentifier.set(stateID, undefined);
+				}
 			};
 
 			// register event listeners
 			connection.events.on('incoming', incomingMessageHandler);
 			connection.events.on('response', responseHandler);
-			connection.events.on('secured', resetIdentifier);
+			connection.events.on('secured', checkExistingSession);
 
 			// emit data to tls server
 			connection.events.emit('decrypt', data);
@@ -413,7 +427,7 @@ export class EAPTTLS implements IEAPMethod {
 			// cleanup
 			connection.events.off('incoming', incomingMessageHandler);
 			connection.events.off('response', responseHandler);
-			connection.events.off('secured', resetIdentifier);
+			connection.events.off('secured', checkExistingSession);
 
 			// connection.events.off('secured');
 
