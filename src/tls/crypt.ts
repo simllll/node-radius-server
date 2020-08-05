@@ -97,7 +97,7 @@ export function startTLSServer(): ITLSServer {
 		});
 
 		log('*********** new TLS connection established / secured ********');
-		emitter.emit('secured', encrypted.isSessionReused());
+		emitter.emit('secured', cleartext.isSessionReused());
 	});
 
 	cleartext.on('error', (err?: Error) => {
