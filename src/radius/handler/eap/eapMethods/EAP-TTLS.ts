@@ -400,26 +400,11 @@ export class EAPTTLS implements IEAPMethod {
 				);
 			};
 
-			const checkExistingSession = () => {
-				log(
-					'secured, check cache, and if there is one, resposne accordingly',
-					packet,
-					packet.attributes['Acct-Session-Id']
-				);
-				/*
-				if (
-					packet.attributes['Acct-Session-Id'] &&
-					this.activeSessions.get(packet.attributes['Acct-Session-Id'] as string)
-				) {
-					log('cache exists');
-					// valid session, good to go
+			const checkExistingSession = (isSessionReused) => {
+				if (isSessionReused) {
+					log('secured, session reused, accept auth!');
 					sendResponsePromise.resolve(this.authResponse(identifier, true, connection.tls, packet));
-				} else {
-					log('cache does not exist');
-					// reset identifier and reject
-					// sendResponsePromise.resolve(this.authResponse(identifier, false, connection.tls, packet));
-					// this.lastProcessedIdentifier.set(stateID, undefined);
-				}*/
+				}
 			};
 
 			// register event listeners
