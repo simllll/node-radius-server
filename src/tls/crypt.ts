@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import * as DuplexPair from 'native-duplexpair';
 import debug from 'debug';
 import * as NodeCache from 'node-cache';
+// import * as constants from 'constants';
 import * as config from '../../config';
 
 const log = debug('radius:tls');
@@ -96,6 +97,7 @@ export function startTLSServer(): ITLSServer {
 		});
 
 		log('*********** new TLS connection established / secured ********');
+		emitter.emit('secured', cleartext.isSessionReused());
 	});
 
 	cleartext.on('error', (err?: Error) => {

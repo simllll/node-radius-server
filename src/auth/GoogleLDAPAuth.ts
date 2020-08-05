@@ -14,6 +14,7 @@ interface IGoogleLDAPAuthOptions {
 	/** base DN
 	 *  e.g. 'dc=hokify,dc=com', */
 	base: string;
+	searchBase?: string; // default ou=users,{{base}}
 	tls: {
 		keyFile: string;
 		certFile: string;
@@ -35,8 +36,11 @@ export class GoogleLDAPAuth implements IAuthentication {
 
 	private config: ClientOptions;
 
+	searchBase: string;
+
 	constructor(config: IGoogleLDAPAuthOptions) {
 		this.base = config.base;
+		this.searchBase = config.searchBase || `ou=users,${this.base}`;
 
 		const tlsOptions = {
 			key: fs.readFileSync(config.tls.keyFile),
@@ -50,7 +54,9 @@ export class GoogleLDAPAuth implements IAuthentication {
 			tlsOptions,
 		};
 
-		this.fetchDNs();
+		this.fetchDNs().catch((err) => {
+			console.error('fatal error google ldap auth, cannot fetch DNs', err);
+		});
 	}
 
 	private async fetchDNs() {
@@ -63,7 +69,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 			});
 
 			ldapDNClient.search(
-				this.base,
+				this.searchBase,
 				{
 					scope: 'sub',
 				},
@@ -86,8 +92,8 @@ export class GoogleLDAPAuth implements IAuthentication {
 					});
 
 					res.on('error', function (ldapErr) {
-						console.error(`error: ${ldapErr.message}`);
-						reject();
+						console.error(`error: ${JSON.stringify(ldapErr)}`);
+						reject(ldapErr);
 					});
 
 					res.on('end', (result) => {
@@ -132,6 +138,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 			if (!dnsFetched && !forceFetching) {
 				return this.authenticate(username, password, count, true);
 			}
+			// console.log('this.allValidDNsCache', this.allValidDNsCache);
 			console.error(`invalid username, not found in DN: ${username}`); // , this.allValidDNsCache);
 			return false;
 		}

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.6](https://github.com/simllll/node-radius-server/compare/v1.1.5...v1.1.6) (2020-08-05)
+
+
+### Bug Fixes
+
+* **google-auth:** search base must include ou ([a3ab393](https://github.com/simllll/node-radius-server/commit/a3ab393379be7f1b8b2f82347bbc4300b8db409d))
+
 ### [1.1.5](https://github.com/simllll/node-radius-server/compare/v1.1.4...v1.1.5) (2020-06-26)
 
 
