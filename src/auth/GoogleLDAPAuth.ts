@@ -86,7 +86,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 					});
 
 					res.on('error', function (ldapErr) {
-						console.error(`error: ${ldapErr.message}`);
+						console.error(`error: ${JSON.stringify(ldapErr)}`);
 						reject();
 					});
 
