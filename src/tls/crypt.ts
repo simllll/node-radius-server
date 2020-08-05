@@ -60,17 +60,19 @@ export function startTLSServer(): ITLSServer {
 	);
 
 	emitter.on('decrypt', (data: Buffer) => {
+		console.log('decrypt data', data);
 		encrypted.write(data);
 		// encrypted.sync();
 	});
 
 	emitter.on('encrypt', (data: Buffer) => {
+		console.log('encrypt data', data);
 		cleartext.write(data);
 		// encrypted.sync();
 	});
 
 	encrypted.on('data', (data: Buffer) => {
-		// log('encrypted data', data, data.toString());
+		log('encrypted data', data, data.toString());
 		emitter.emit('response', data);
 	});
 
