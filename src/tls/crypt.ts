@@ -91,6 +91,22 @@ export function startTLSServer(): ITLSServer {
 			emitter.emit('end');
 		});
 
+		cleartext.on('newSession', (line) => {
+			log('############ newSession #############', line);
+		});
+
+		cleartext.on('resumeSession', (line) => {
+			log('############ resumeSession #############', line);
+		});
+
+		cleartext.on('session', (line) => {
+			log('############ session #############', line);
+		});
+
+		cleartext.on('tlsClientError', (line) => {
+			log('############ tlsClientError #############', line);
+		});
+
 		cleartext.on('keylog', (line) => {
 			log('############ KEYLOG #############', line);
 			// cleartext.getTicketKeys()
