@@ -406,9 +406,11 @@ export class EAPTTLS implements IEAPMethod {
 					packet.attributes['Acct-Session-Id'] &&
 					this.activeSessions.get(packet.attributes['Acct-Session-Id'] as string)
 				) {
+					log('cache exists');
 					// valid session, good to go
 					sendResponsePromise.resolve(this.authResponse(identifier, true, connection.tls, packet));
 				} else {
+					log('cache does not exist');
 					// reset identifier and reject
 					sendResponsePromise.resolve(this.authResponse(identifier, false, connection.tls, packet));
 					this.lastProcessedIdentifier.set(stateID, undefined);
