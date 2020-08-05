@@ -84,7 +84,7 @@ export function startTLSServer(): ITLSServer {
 		}
 
 		cleartext.on('data', (data: Buffer) => {
-			// log('cleartext data', data, data.toString());
+			log('cleartext data', data, data.toString());
 			emitter.emit('incoming', data);
 		});
 
