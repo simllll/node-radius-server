@@ -17,8 +17,8 @@
 	"homepage": "https://github.com/simllll/node-radius-server",
 	"scripts": {
 		"release": "npm run build && standard-version",
-		"debug": "DEBUG=radius:* node dist/app.js",
-		"start": "node dist/app.js",
+		"debug": "DEBUG=radius:* node --tls-min-v1.0 dist/app.js",
+		"start": "node --tls-min-v1.0 dist/app.js",
 		"build": "tsc",
 		"dev": "ts-node src/app.ts",
 		"test": "mocha -r ts-node/register __tests__/**/*.test.ts",
