@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.8](https://github.com/simllll/node-radius-server/compare/v1.1.7...v1.1.8) (2020-09-03)
+
+
+### Bug Fixes
+
+* **tls:** allow tls v1.0 ([55e6dc4](https://github.com/simllll/node-radius-server/commit/55e6dc4b0b2ddc2d24704a0ef57c56b8905e7aa4))
+
 ### [1.1.7](https://github.com/simllll/node-radius-server/compare/v1.1.5...v1.1.7) (2020-08-05)
 
 
