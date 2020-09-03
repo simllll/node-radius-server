@@ -14,20 +14,21 @@ Authentication tested with Windows, Linux, Android and Apple devices.
 2. Check out the config options, e.g. for google ldap, download your certificates from http://admin.google.com/ -> Apps -> LDAP -> Client
 download the files and name them "ldap.gsuite.key" and "ldap.gsuite.crt" accordingly (Ensure you have activated your newly created LDAP Client in Google Admin).
 3. Switch to this directory and run "npx radius-server -s YourRadiusSecret"
-3. Switch to this directory and run "npx radius-server -s YourRadiusSecret"
 4. Log into your WLAN Controller and configure the radius server to your newly running radius
 5. On your clients, just connect to the WLAN, the clients should figure out the correct method by their own,
 if they don't use: WPA2-Enterprise -> EAP-TTLS -> PAP / CHAP
-6. Log in via your google credentials (email + password, ... e.g. youremail@yourcompany.com)
+6. Log in with your google credentials (email + password, ... e.g. youremail@yourcompany.com)
 
 ## Known Issues / Disclaimer
 
 Support for this has landed in node 13.10.1, therefore ensure you have installed at least this node version.
 
-- MD5 Challenge not implenented, but RFC says this is mandatory ;-)
+- MD5 Challenge not implemented, but RFC says this is mandatory ;-) (no worries, it isn't)
 - Inner Tunnel does not act differently, even though spec says that EAP-message are not allowed to get fragmented,
 this is not a problem right now, as the messages of the inner tunnel are small enough, but it could be a bug in the future.
 ways to approach this: refactor that the inner tunnel can set max fragment size, or rebuild eap fragments in ttls after inner tunnel response
+- minor security issues regarding session resumption. It could theoretically be possible to hijack when the auth is actually rejected, but the session is resumed 
+in the same time frame (sessions are currently not explicitly killed on rejected auths).
 
 CONTRIBUTIONS WELCOME! If you are willing to help, just open a PR or contact me via bug system or simon.tretter@hokify.com.
 
