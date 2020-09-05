@@ -45,7 +45,7 @@
 	"devDependencies": {
 		"ts-node": "^9.0.0",
 		"standard-version": "^9.0.0",
-		"@hokify/eslint-config": "^0.4.48",
+		"@hokify/eslint-config": "^0.5.0",
 		"@types/chai": "^4.2.12",
 		"@types/ldapjs": "^1.0.9",
 		"@types/mocha": "^8.0.3",
