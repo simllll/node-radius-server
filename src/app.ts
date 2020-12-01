@@ -18,7 +18,7 @@ if (typeof (testSocket.tls as any).exportKeyingMaterial !== 'function') {
 
 const { argv } = yargs
 	.usage('NODE RADIUS Server\nUsage: radius-server')
-	.example('radius-server --port 1812 -s radiussecret')
+	.example('radius-server --port 1812 -s radiussecret', 'start on port 1812 with a secret')
 	.default({
 		port: config.port || 1812,
 		s: config.secret || 'testing123',

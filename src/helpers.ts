@@ -38,4 +38,4 @@ export const newDeferredPromise = (): IDeferredPromise => {
 };
 
 export const delay = (timeout: number) =>
-	new Promise((resolve) => setTimeout(() => resolve(), timeout));
+	new Promise<void>((resolve) => setTimeout(() => resolve(), timeout));

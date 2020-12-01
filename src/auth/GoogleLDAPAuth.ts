@@ -62,7 +62,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 	private async fetchDNs() {
 		const dns: { [key: string]: string } = {};
 
-		await new Promise((resolve, reject) => {
+		await new Promise<void>((resolve, reject) => {
 			const ldapDNClient = createClient(this.config).on('error', (error) => {
 				console.error('Error in ldap', error);
 				reject(error);
