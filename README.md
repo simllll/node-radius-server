@@ -1,13 +1,47 @@
-Basic RADIUS Server for node.js for Google LDAP Service and WPA2 Enterprise WLAN Authentification.
+easy extensible NodeJS RADIUS Server
 
-- supports LDAP Authentification Backend
-- supports WPA2 Enterprise (TTLS over PAP)
+- supports different authentification backends
+    - LDAP (e.g. for Google LDAP Service, but also any other LDAP service)
+    - HTTP
+    - IMAP
+    - SMTP
+    - Predefined / Static username and password
+- supports WPA2 Enterprise
+    - TTLS
+    - PAP / GTC
 
 Protect your WIFI access with a username and password by a credential provider you already use!
 
 Authentication tested with Windows, Linux, Android and Apple devices.
 
-# Quick start
+## Introduction
+
+This app provides a radius server to authenticate against an authentication service. To get this running
+you need:
+
+1.  An running Auth Service (e.g. LDAP Service / Google Suite Enterprise / Gloud Identity Premium)
+2.  Optional: Create your own SSL certificate (e.g. self signed via npm run create-certificate)
+3.  Check config.js and adapt to your needs
+
+- configure authentication:
+  set authenticaiton to one of the [provided authenticators](src/auth/README.md), e.g.:
+
+```js
+var config = {
+	// ....
+	authentication: 'GoogleLDAPAuth',
+	authenticationOptions: {
+		base: 'dc=hokify,dc=com'
+	}
+};
+```
+
+- set radius secret
+
+4.  Install und build server: npm install && npm run build
+5.  Start server "npm run start"
+
+# Quick start for using it with Google LDAP
 
 1. Install node js => 13.10.1
     - easiest way is to install a node js version from nodejs.org or run "npx n latest" to install latest version.
@@ -18,6 +52,22 @@ download the files and name them "ldap.gsuite.key" and "ldap.gsuite.crt" accordi
 5. On your clients, just connect to the WLAN, the clients should figure out the correct method by their own,
 if they don't use: WPA2-Enterprise -> EAP-TTLS -> PAP / CHAP
 6. Log in with your google credentials (email + password, ... e.g. youremail@yourcompany.com)
+
+## Configuration
+
+For authentication see [Authentication Details](src/auth/README.md).
+For general config options run with --help or see see [config.js](config.js) in root.
+
+## Installation
+
+    npm install
+    npm run build
+
+## Usage
+
+Ensure you have installed latest node version (>= 13.10.1) and run:
+
+    npm run start
 
 ## Known Issues / Disclaimer
 
@@ -59,45 +109,3 @@ for everyone. Why limit it to something "complex" like LDAP and co. This library
 to implement either their own authentication mechanismus (e.g. against a database), or provides some mechansimns
 out of the box (e.g. imap, static, ldap,..).
 
-## Installation
-
-    npm install
-    npm run build
-
-## Introduction
-
-This app provides a radius server to authenticate against google's SLDAP service. To get this running
-you need:
-
-1.  Running LDAP Service (E.g. Google Suite Enterprise or Gloud Identity Premium)
-2.  Optional: Create your own SSL certificate (e.g. self signed via npm run create-certificate)
-3.  Check config.js and adapt to your needs
-
-- configure authentication:
-  set authenticaiton to one of the provided authenticators.
-
-```js
-var config = {
-	// ....
-	authentication: 'GoogleLDAPAuth',
-	authenticationOptions: {
-		base: 'dc=hokify,dc=com'
-	}
-};
-```
-
-- set radius secret
-
-4.  Install und build server: npm install && npm run build
-5.  Start server "npm run start"
-
-## Configuration
-
-For authentication see [Authentication Details](src/auth/README.md).
-For general config options run with --help or see see [config.js](config.js) in root.
-
-## Usage
-
-Ensure you have installed latest node version (>= 13.10.1) and run:
-
-    npm run start

@@ -168,3 +168,25 @@ c = {
 	}
 };
 ```
+
+
+## HTTP Post Auth
+
+http authenticiation via http post request
+
+```typescript
+interface IStaticAuthOtions {
+	url: string; // url to send a post request with username and password 
+}
+```
+
+Example
+
+```js
+c = {
+	authentication: 'HTTPAuth',
+	authenticationOptions: {
+		url: 'https://my-website.com/api/backend-login'
+	}
+};
+```
