@@ -67,4 +67,11 @@ module.exports = {
 		validHosts: ['gmail.com']
 	}
 	 */
+	 
+	/** HTTP AUTH 
+	authentication: 'HTTPAuth',
+	authenticationOptions: {
+		url: 'https://my-website.com/api/backend-login'
+	}
+	*/
 };

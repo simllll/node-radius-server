@@ -31,6 +31,7 @@
 	"main": "dist/app.js",
 	"dependencies": {
 		"@hokify/node-ts-cache": "^5.4.1",
+		"axios": "^0.21.1",
 		"debug": "^4.3.1",
 		"imap-simple": "^5.0.0",
 		"ldapauth-fork": "^5.0.1",
