@@ -43,14 +43,14 @@ export class LDAPAuth implements IAuthentication {
 			searchFilter: config.searchFilter || '(uid={{username}})',
 			reconnect: true,
 		});
-		this.ldap.on('error', function (err) {
+		this.ldap.on('error', (err) => {
 			console.error('LdapAuth: ', err);
 		});
 	}
 
-	async authenticate(username: string, password: string) {
+	async authenticate(username: string, password: string): Promise<boolean> {
 		const authResult: boolean = await new Promise((resolve, reject) => {
-			this.ldap.authenticate(username, password, function (err, user) {
+			this.ldap.authenticate(username, password, (err, user) => {
 				if (err) {
 					resolve(false);
 					console.error('ldap error', err);
@@ -61,6 +61,6 @@ export class LDAPAuth implements IAuthentication {
 			});
 		});
 
-		return !!authResult;
+		return authResult;
 	}
 }

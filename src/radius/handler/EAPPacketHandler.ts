@@ -86,9 +86,9 @@ export class EAPPacketHandler implements IPacketHandler {
 									supportedEAPMethods.push(supportedMethod);
 								}
 
-								currentState.validMethods = currentState.validMethods.filter((method) => {
-									return supportedEAPMethods.includes(method.getEAPType()); // kick it out?
-								});
+								currentState.validMethods = currentState.validMethods.filter(
+									(method) => supportedEAPMethods.includes(method.getEAPType()) // kick it out?
+								);
 								// save
 								this.eapConnectionStates.set(stateID, currentState);
 
@@ -101,9 +101,7 @@ export class EAPPacketHandler implements IPacketHandler {
 						// continue with responding a NAK and add rest of supported methods
 						// eslint-disable-next-line no-fallthrough
 						default: {
-							const eapMethod = this.eapMethods.find((method) => {
-								return type === method.getEAPType();
-							});
+							const eapMethod = this.eapMethods.find((method) => type === method.getEAPType());
 
 							if (eapMethod) {
 								return eapMethod.handleMessage(

@@ -79,7 +79,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 						return;
 					}
 
-					res.on('searchEntry', function (entry) {
+					res.on('searchEntry', (entry) => {
 						// log('entry: ' + JSON.stringify(entry.object));
 						usernameFields.forEach((field) => {
 							const index = entry.object[field] as string;
@@ -87,11 +87,11 @@ export class GoogleLDAPAuth implements IAuthentication {
 						});
 					});
 
-					res.on('searchReference', function (referral) {
+					res.on('searchReference', (referral) => {
 						log(`referral: ${referral.uris.join()}`);
 					});
 
-					res.on('error', function (ldapErr) {
+					res.on('error', (ldapErr) => {
 						console.error(`error: ${JSON.stringify(ldapErr)}`);
 						reject(ldapErr);
 					});
@@ -110,7 +110,12 @@ export class GoogleLDAPAuth implements IAuthentication {
 		this.lastDNsFetch = new Date();
 	}
 
-	async authenticate(username: string, password: string, count = 0, forceFetching = false) {
+	async authenticate(
+		username: string,
+		password: string,
+		count = 0,
+		forceFetching = false
+	): Promise<boolean> {
 		const cacheValidTime = new Date();
 		cacheValidTime.setHours(cacheValidTime.getHours() - 12);
 
@@ -150,7 +155,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 			authClient.bind(dn, password, (err, res) => {
 				if (err) {
 					if (err && (err as any).stack && (err as any).stack.includes(`ldap.google.com closed`)) {
-						count++;
+						count += 1;
 						// wait 1 second to give the ldap error handler time to reconnect
 						setTimeout(() => resolve(this.authenticate(dn, password)), 2000);
 						return;
@@ -167,6 +172,6 @@ export class GoogleLDAPAuth implements IAuthentication {
 			});
 		});
 
-		return !!authResult;
+		return authResult;
 	}
 }

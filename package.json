@@ -34,27 +34,27 @@
 		"debug": "^4.3.1",
 		"imap-simple": "^5.0.0",
 		"ldapauth-fork": "^5.0.1",
-		"ldapjs": "^2.2.2",
+		"ldapjs": "^2.2.3",
 		"native-duplexpair": "^1.0.0",
 		"node-cache": "^5.1.2",
 		"radius": "~1.1.4",
 		"smtp-client": "^0.3.3",
-		"yargs": "~16.1.1"
+		"yargs": "~16.2.0"
 	},
 	"license": "GPLv3",
 	"devDependencies": {
-		"@hokify/eslint-config": "^1.0.5",
+		"@hokify/eslint-config": "^1.1.0",
 		"@types/chai": "^4.2.14",
 		"@types/ldapjs": "^1.0.9",
-		"@types/mocha": "^8.0.4",
+		"@types/mocha": "^8.2.0",
 		"@types/radius": "0.0.28",
-		"@types/yargs": "^15.0.10",
+		"@types/yargs": "^15.0.12",
 		"chai": "^4.2.0",
-		"eslint": "^7.14.0",
+		"eslint": "^7.18.0",
 		"mocha": "^8.2.1",
 		"prettier": "^2.2.1",
-		"standard-version": "^9.0.0",
-		"ts-node": "^9.0.0",
-		"typescript": "^4.1.2"
+		"standard-version": "^9.1.0",
+		"ts-node": "^9.1.1",
+		"typescript": "^4.1.3"
 	}
 }
