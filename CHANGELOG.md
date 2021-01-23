@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/simllll/node-radius-server/compare/v1.1.10...v1.2.0) (2021-01-23)
+
+
+### Features
+
+* new auth mechnasimn via http post ([#99](https://github.com/simllll/node-radius-server/issues/99)) ([279541a](https://github.com/simllll/node-radius-server/commit/279541a669ca9b70847c7c25f265f1bf77bc8a51))
+
 ### [1.1.10](https://github.com/simllll/node-radius-server/compare/v1.1.9...v1.1.10) (2020-12-01)
 
 ### [1.1.9](https://github.com/simllll/node-radius-server/compare/v1.1.8...v1.1.9) (2020-09-03)
