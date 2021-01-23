@@ -1,4 +1,4 @@
-easy extensible NodeJS RADIUS Server
+# easy extensible NodeJS RADIUS Server
 
 - supports different authentification backends
     - LDAP (e.g. for Google LDAP Service, but also any other LDAP service)
@@ -41,7 +41,7 @@ var config = {
 4.  Install und build server: npm install && npm run build
 5.  Start server "npm run start"
 
-# Quick start for using it with Google LDAP
+## Quick start for using it with Google LDAP
 
 1. Install node js => 13.10.1
     - easiest way is to install a node js version from nodejs.org or run "npx n latest" to install latest version.
