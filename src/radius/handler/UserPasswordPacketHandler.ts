@@ -14,7 +14,10 @@ export class UserPasswordPacketHandler implements IPacketHandler {
 
 	async handlePacket(packet: IPacket): Promise<IPacketHandlerResult> {
 		const username = packet.attributes['User-Name'];
-		const password = packet.attributes['User-Password'];
+		let password = packet.attributes['User-Password'];
+		if (Buffer.isBuffer(password)) {
+			password = password.slice(0, password.indexOf('\0'));
+		}
 
 		if (!username || !password) {
 			// params missing, this handler cannot continue...
@@ -37,6 +40,7 @@ export class UserPasswordPacketHandler implements IPacketHandler {
 		}
 
 		// Failed
+		console.error('decoding of UserPassword package failed');
 		return {
 			code: PacketResponseCode.AccessReject,
 		};
