@@ -10,11 +10,12 @@ module.exports = {
 	secret: 'testing123',
 
 	certificate: {
-		cert: fs.readFileSync(path.join(SSL_CERT_DIRECTORY, '/server.crt')),
+		ca: fs.readFileSync(path.join(SSL_CERT_DIRECTORY, '/ca.pem'), 'utf8'),
+		cert: fs.readFileSync(path.join(SSL_CERT_DIRECTORY, '/server.crt'), 'utf8'),
 		key: [
 			{
-				pem: fs.readFileSync(path.join(SSL_CERT_DIRECTORY, '/server.key')),
-				passphrase: 'whatever2020',
+				pem: fs.readFileSync(path.join(SSL_CERT_DIRECTORY, '/server.key'), 'utf8'),
+				passphrase: 'whatever',
 			},
 		],
 		// sessionTimeout: 3600,
@@ -22,7 +23,26 @@ module.exports = {
 		// ticketKeys: Buffer.from('123456789012345678901234567890123456789012345678'),
 	},
 
-	// GoogleLDAPAuth (optimized for google auth)
+	// StaticAuth
+	authentication: 'StaticAuth',
+	authenticationOptions: {
+		validCredentials: [
+			{
+				username: 'testing',
+				password: 'password',
+			},
+			{
+				username: 't',
+				password: 'p',
+			},
+			{
+				username: 'user',
+				password: 'pwd',
+			},
+		],
+	},
+
+	/* GoogleLDAPAuth (optimized for google auth)
 	authentication: 'GoogleLDAPAuth',
 	authenticationOptions: {
 		base: 'dc=hokify,dc=com',
@@ -32,8 +52,9 @@ module.exports = {
 			certFile: 'ldap.gsuite.crt',
 		},
 	},
+	*/
 
-	/** LDAP AUTH 
+	/** LDAP AUTH
 	authentication: 'LDAPAuth',
 	authenticationOptions: {
 		url: 'ldaps://ldap.google.com',
@@ -48,7 +69,7 @@ module.exports = {
 	}
 	*/
 
-	/** IMAP AUTH 
+	/** IMAP AUTH
 	authentication: 'IMAPAuth',
 	authenticationOptions: {
 		host: 'imap.gmail.com',
@@ -58,7 +79,7 @@ module.exports = {
 	}
 	 */
 
-	/** SMTP AUTH 
+	/** SMTP AUTH
 	authentication: 'IMAPAuth',
 	authenticationOptions: {
 		host: 'smtp.gmail.com',

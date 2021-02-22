@@ -16,6 +16,8 @@ export class RadiusService {
 	): Promise<{ data: Buffer; expectAcknowledgment?: boolean } | undefined> {
 		const packet = radius.decode({ packet: msg, secret: this.secret });
 
+		// console.log(packet);
+
 		if (packet.code !== 'Access-Request') {
 			console.error('unknown packet type: ', packet.code);
 			return undefined;
@@ -27,6 +29,8 @@ export class RadiusService {
 		if (!response || !response.code) {
 			return undefined;
 		}
+
+		// console.log(response);
 
 		// all fine, return radius encoded response
 		return {

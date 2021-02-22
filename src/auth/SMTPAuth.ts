@@ -65,4 +65,14 @@ export class SMTPAuth implements IAuthentication {
 		}
 		return success;
 	}
+
+	async authenticateMD5Challenge(
+		_identifier: number,
+		_username: string,
+		_challenge: Buffer,
+		_match: Buffer
+	): Promise<boolean> {
+		// not implemented
+		return false;
+	}
 }

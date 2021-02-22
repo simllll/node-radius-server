@@ -1,8 +1,8 @@
-// https://tools.ietf.org/html/rfc5281 TTLS v0
-// https://tools.ietf.org/html/draft-funk-eap-ttls-v1-00 TTLS v1 (not implemented)
+// https://tools.ietf.org/html/draft-josefsson-pppext-eap-tls-eap-06
 /* eslint-disable no-bitwise */
 import * as tls from 'tls';
 import * as NodeCache from 'node-cache';
+import * as crypto from 'crypto';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { attr_id_to_name, attr_name_to_id } from 'radius';
@@ -22,7 +22,7 @@ import { IAuthentication } from '../../../../types/Authentication';
 import { secret } from '../../../../../config';
 import { buildEAP, decodeEAPHeader, authResponse } from '../EAPHelper';
 
-const log = debug('radius:eap:ttls');
+const log = debug('radius:eap:peap');
 
 function tlsHasExportKeyingMaterial(
 	tlsSocket
@@ -44,7 +44,7 @@ interface IAVPEntry {
 	data: Buffer;
 }
 
-export class EAPTTLS implements IEAPMethod {
+export class EAPPEAP implements IEAPMethod {
 	private lastProcessedIdentifier = new NodeCache({ useClones: false, stdTTL: 60 });
 
 	// { [key: string]: Buffer } = {};
@@ -53,22 +53,23 @@ export class EAPTTLS implements IEAPMethod {
 	private openTLSSockets = new NodeCache({ useClones: false, stdTTL: 3600 }); // keep sockets for about one hour
 
 	getEAPType(): number {
-		return EAPMessageType.TTLS;
+		return EAPMessageType.PEAP;
 	}
 
 	identify(identifier: number, stateID: string): IPacketHandlerResult {
-		return this.buildEAPTTLSResponse(identifier, EAPMessageType.TTLS, 0x20, stateID);
+		return this.buildEAPPEAPResponse(identifier, EAPMessageType.PEAP, 0x20, stateID);
 	}
 
 	constructor(private authentication: IAuthentication, private innerTunnel: IPacketHandler) {}
 
-	private buildEAPTTLSResponse(
+	private buildEAPPEAPResponse(
 		identifier: number,
-		msgType = EAPMessageType.TTLS,
+		msgType = EAPMessageType.PEAP,
 		msgFlags = 0x00,
 		stateID: string,
 		data?: Buffer,
-		newResponse = true
+		newResponse = true,
+		extraAttributes?: any[]
 	): IPacketHandlerResult {
 		const { resBuffer, dataToQueue } = buildEAP(
 			identifier,
@@ -86,7 +87,7 @@ export class EAPTTLS implements IEAPMethod {
 			this.queueData.del(stateID);
 		}
 
-		const attributes: any = [['State', Buffer.from(stateID)]];
+		let attributes: any = [['State', Buffer.from(stateID)]]; // Calling-Station-Id
 		let sentDataSize = 0;
 		do {
 			if (resBuffer.length > 0) {
@@ -98,20 +99,18 @@ export class EAPTTLS implements IEAPMethod {
 			}
 		} while (sentDataSize < resBuffer.length);
 
+		if (extraAttributes) {
+			attributes = attributes.concat(extraAttributes);
+		}
+
 		return {
 			code: PacketResponseCode.AccessChallenge,
 			attributes,
 		};
 	}
 
-	ttlsAuthResponse(
-		identifier: number,
-		success: boolean,
-		socket: tls.TLSSocket,
-		packet: IPacket
-	): IPacketHandlerResult {
+	peapExtraAttributes(socket: tls.TLSSocket, packet: IPacket): any[] {
 		const extraAttributes: any[] = [];
-
 		if (tlsHasExportKeyingMaterial(socket)) {
 			const keyingMaterial = socket.exportKeyingMaterial(128, 'ttls keying material');
 
@@ -135,7 +134,16 @@ export class EAPTTLS implements IEAPMethod {
 				'FATAL: no exportKeyingMaterial method available!!!, you need latest NODE JS, see https://github.com/nodejs/node/pull/31814'
 			);
 		}
+		return extraAttributes;
+	}
 
+	peapAuthResponse(
+		identifier: number,
+		success: boolean,
+		socket: tls.TLSSocket,
+		packet: IPacket
+	): IPacketHandlerResult {
+		const extraAttributes = this.peapExtraAttributes(socket, packet);
 		return authResponse(identifier, success, packet, extraAttributes);
 	}
 
@@ -153,20 +161,26 @@ export class EAPTTLS implements IEAPMethod {
 		this.lastProcessedIdentifier.set(stateID, identifier);
 		try {
 			const { data } = decodeEAPHeader(msg);
+			let connection = this.openTLSSockets.get(stateID) as ITLSServer;
 
 			// check if no data package is there and we have something in the queue, if so.. empty the queue first
 			if (!data || data.length === 0) {
 				const queuedData = this.queueData.get(stateID);
 				if (queuedData instanceof Buffer && queuedData.length > 0) {
 					log(`returning queued data for ${stateID}`);
-					return this.buildEAPTTLSResponse(identifier, EAPMessageType.TTLS, 0x00, stateID, queuedData, false);
+					return this.buildEAPPEAPResponse(
+						identifier,
+						EAPMessageType.PEAP,
+						0x00,
+						stateID,
+						queuedData,
+						false
+					);
 				}
 
-				log(`empty data queue for ${stateID}`);
-				return {};
+				// log(`empty data queue for ${stateID}`);
+				// return {};
 			}
-
-			let connection = this.openTLSSockets.get(stateID) as ITLSServer;
 
 			if (!connection) {
 				connection = startTLSServer();
@@ -211,7 +225,7 @@ export class EAPTTLS implements IEAPMethod {
 					result.code === PacketResponseCode.AccessAccept
 				) {
 					sendResponsePromise.resolve(
-						this.ttlsAuthResponse(
+						this.peapAuthResponse(
 							identifier,
 							result.code === PacketResponseCode.AccessAccept,
 							connection.tls,
@@ -242,7 +256,13 @@ export class EAPTTLS implements IEAPMethod {
 				log('complete');
 				// send back...
 				sendResponsePromise.resolve(
-					this.buildEAPTTLSResponse(identifier, EAPMessageType.TTLS, 0x00, stateID, encryptedResponseData)
+					this.buildEAPPEAPResponse(
+						identifier,
+						EAPMessageType.PEAP,
+						0x00,
+						stateID,
+						encryptedResponseData
+					)
 				);
 			};
 
@@ -250,7 +270,7 @@ export class EAPTTLS implements IEAPMethod {
 				if (isSessionReused) {
 					log('secured, session reused, accept auth!');
 					sendResponsePromise.resolve(
-						this.ttlsAuthResponse(identifier, true, connection.tls, packet)
+						this.peapAuthResponse(identifier, true, connection.tls, packet)
 					);
 				}
 			};
@@ -260,7 +280,20 @@ export class EAPTTLS implements IEAPMethod {
 			connection.events.on('response', responseHandler);
 			connection.events.on('secured', checkExistingSession);
 
-			// emit data to tls server
+			if (!data || data.length === 0) {
+				const challenge = crypto.randomBytes(16);
+				const challengeData = Buffer.from([11, 16, challenge]);
+				const plaintext = encodeTunnelPW(challengeData, packet.authenticator, secret);
+
+				return this.buildEAPPEAPResponse(
+					identifier,
+					EAPMessageType.PEAP,
+					0x20,
+					stateID,
+					plaintext
+				);
+			}
+
 			connection.events.emit('decrypt', data);
 			const responseData = await sendResponsePromise.promise;
 
@@ -269,12 +302,10 @@ export class EAPTTLS implements IEAPMethod {
 			connection.events.off('response', responseHandler);
 			connection.events.off('secured', checkExistingSession);
 
-			// connection.events.off('secured');
-
 			// send response
-			return responseData; // this.buildEAPTTLSResponse(identifier, EAPMessageType.TTLS, 0x00, stateID, encryptedResponseData);
+			return responseData;
 		} catch (err) {
-			console.error('decoding of EAP-TTLS package failed', msg, err);
+			console.error('decoding of EAP-PEAP package failed', msg, err);
 			return {
 				code: PacketResponseCode.AccessReject,
 			};
@@ -403,7 +434,7 @@ export class EAPTTLS implements IEAPMethod {
       may be safely ignored if the receiving party does not understand
       or support it.  If set to 1, this indicates that the receiving
       party MUST fail the negotiation if it does not understand the AVP;
-      for a TTLS server, this would imply returning EAP-Failure, for a
+      for a PEAP server, this would imply returning EAP-Failure, for a
       client, this would imply abandoning the negotiation.
 		 */
 		let flagValue = 0;

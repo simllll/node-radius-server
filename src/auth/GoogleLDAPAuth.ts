@@ -169,4 +169,14 @@ export class GoogleLDAPAuth implements IAuthentication {
 
 		return !!authResult;
 	}
+
+	async authenticateMD5Challenge(
+		_identifier: number,
+		_username: string,
+		_challenge: Buffer,
+		_match: Buffer
+	): Promise<boolean> {
+		// not implemented
+		return false;
+	}
 }

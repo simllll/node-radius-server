@@ -4,6 +4,7 @@ import { EAPPacketHandler } from './handler/EAPPacketHandler';
 import { EAPTTLS } from './handler/eap/eapMethods/EAP-TTLS';
 import { EAPGTC } from './handler/eap/eapMethods/EAP-GTC';
 import { EAPMD5 } from './handler/eap/eapMethods/EAP-MD5';
+import { EAPPEAP } from './handler/eap/eapMethods/EAP-PEAP';
 import { UserPasswordPacketHandler } from './handler/UserPasswordPacketHandler';
 
 export class PacketHandler implements IPacketHandler {
@@ -13,6 +14,7 @@ export class PacketHandler implements IPacketHandler {
 		this.packetHandlers.push(
 			new EAPPacketHandler([
 				new EAPTTLS(authentication, this),
+				new EAPPEAP(authentication, this),
 				new EAPGTC(authentication),
 				new EAPMD5(authentication),
 			])

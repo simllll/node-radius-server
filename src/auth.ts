@@ -10,7 +10,7 @@ const cacheStrategy = new ExpirationStrategy(new MemoryStorage());
 export class Authentication implements IAuthentication {
 	cache = new NodeCache();
 
-	constructor(private authenticator: IAuthentication) {}
+	constructor(private authenticator: IAuthentication) { }
 
 	@Cache(cacheStrategy, { ttl: 60000 })
 	async authenticate(username: string, password: string): Promise<boolean> {
@@ -26,5 +26,20 @@ export class Authentication implements IAuthentication {
 		this.cache.set(cacheKey, authResult, authResult ? 86400 : 60); // cache for one day on success, otherwise just for 60 seconds
 
 		return authResult;
+	}
+
+	async authenticateMD5Challenge(
+		identifier: number,
+		username: string,
+		challenge: Buffer,
+		match: Buffer
+	): Promise<boolean> {
+		// eslint-disable-next-line no-return-await
+		return await this.authenticator.authenticateMD5Challenge(
+			identifier,
+			username,
+			challenge,
+			match
+		);
 	}
 }
