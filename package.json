@@ -44,7 +44,7 @@
 	},
 	"license": "GPLv3",
 	"devDependencies": {
-		"@hokify/eslint-config": "^1.1.0",
+		"@hokify/eslint-config": "^2.0.10",
 		"@types/chai": "^4.2.14",
 		"@types/ldapjs": "^1.0.9",
 		"@types/mocha": "^8.2.0",
