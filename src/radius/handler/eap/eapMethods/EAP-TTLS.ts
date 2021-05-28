@@ -23,12 +23,10 @@ import { secret } from '../../../../../config';
 
 const log = debug('radius:eap:ttls');
 
-function tlsHasExportKeyingMaterial(
-	tlsSocket
-): tlsSocket is {
+function tlsHasExportKeyingMaterial(tlsSocket): tlsSocket is {
 	exportKeyingMaterial: (length: number, label: string, context?: Buffer) => Buffer;
 } {
-	return typeof (tlsSocket as any).exportKeyingMaterial === 'function';
+	return typeof tlsSocket.exportKeyingMaterial === 'function';
 }
 
 interface IAVPEntry {

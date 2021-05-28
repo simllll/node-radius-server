@@ -9,7 +9,7 @@ import { startTLSServer } from './tls/crypt';
 
 /* test node version */
 const testSocket = startTLSServer();
-if (typeof (testSocket.tls as any).exportKeyingMaterial !== 'function') {
+if (typeof testSocket.tls.exportKeyingMaterial !== 'function') {
 	console.error(`UNSUPPORTED NODE VERSION (${process.version}) FOUND!!`);
 
 	console.log('min version supported is node js 14. run "sudo npx n 14"');
