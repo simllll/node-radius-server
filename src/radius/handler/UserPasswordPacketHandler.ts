@@ -14,7 +14,12 @@ export class UserPasswordPacketHandler implements IPacketHandler {
 
 	async handlePacket(packet: IPacket): Promise<IPacketHandlerResult> {
 		const username = packet.attributes['User-Name'];
-		const password = packet.attributes['User-Password'];
+		let password = packet.attributes['User-Password'];
+
+		if (typeof password !== 'string' && password.indexOf(0x00) > 0) {
+			// check if there is a 0x00 in it, and trim it from there
+			password = password.slice(0, password.indexOf(0x00));
+		}
 
 		if (!username || !password) {
 			// params missing, this handler cannot continue...

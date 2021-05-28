@@ -29,7 +29,9 @@ const { argv } = yargs
 	.alias('s', 'secret')
 	.describe('secret', 'RADIUS secret')
 	.number('port')
-	.string(['secret', 'authentication']);
+	.string(['secret', 'authentication']) as {
+	argv: { port?: number; secret?: string; authentication?: string; authenticationOptions?: any };
+};
 
 console.log(`Listener Port: ${argv.port || 1812}`);
 console.log(`RADIUS Secret: ${argv.secret}`);

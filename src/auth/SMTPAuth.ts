@@ -49,7 +49,7 @@ export class SMTPAuth implements IAuthentication {
 			tlsOptions: {
 				servername: this.host, // SNI (needs to be set for gmail)
 			},
-		});
+		} as any); // secure is currently not part of type def..but it is available: https://www.npmjs.com/package/smtp-client
 
 		let success = false;
 		try {
