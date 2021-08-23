@@ -69,9 +69,40 @@ export function startTLSServer(): ITLSServer {
 		// encrypted.sync();
 	});
 
+	let tlsbuf = Buffer.from([]);
+	let sendChunk = Buffer.from([]);
 	encrypted.on('data', (data: Buffer) => {
 		// log('encrypted data', data, data.toString());
-		emitter.emit('response', data);
+		tlsbuf = Buffer.concat([tlsbuf, data]);
+		let sendFlag = false;
+		for(;;) {
+			if (tlsbuf.length < 5) {
+				log(`Not enough data length! tlsbuf.length = ${tlsbuf.length} < 5`);
+				break;
+			}
+			// Parse TLS record header
+			const contentType = tlsbuf.readUInt8(0);
+			const version = tlsbuf.readUInt16BE(1);
+			const length = tlsbuf.readUInt16BE(3);
+			log(`TLS contentType = ${contentType} version = 0x${version.toString(16)} len = ${length}`);
+			if (tlsbuf.length < length + 5) {
+				log(`Not enough data length! tlsbuf.length < ${tlsbuf.length} < ${length + 5}`);
+				break;
+			}
+			sendChunk = Buffer.concat([sendChunk, tlsbuf.slice(0, length + 5)]);
+			tlsbuf = tlsbuf.slice(length + 5);
+			if (tlsbuf.length == 0) {
+				log('Maybe it is end of TLS burst.');
+				sendFlag = true;
+				break;
+			}
+		}
+		if (sendFlag) {
+			log('sendChunk sz=' + sendChunk.length)
+			const tmp = Buffer.from(sendChunk);
+			sendChunk = Buffer.from([]);
+			emitter.emit('response', tmp);
+		}
 	});
 
 	cleartext.on('secure', () => {
