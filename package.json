@@ -46,7 +46,7 @@
 	"devDependencies": {
 		"@hokify/eslint-config": "^2.0.14",
 		"@types/chai": "^4.2.18",
-		"@types/ldapjs": "^1.0.10",
+		"@types/ldapjs": "^2.2.1",
 		"@types/mocha": "^8.2.2",
 		"@types/radius": "0.0.28",
 		"@types/yargs": "^17.0.0",
