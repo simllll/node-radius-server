@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/simllll/node-radius-server/compare/v1.2.0...v1.2.1) (2021-10-29)
+
+
+### Bug Fixes
+
+* parse large responses correclty ([ef82a99](https://github.com/simllll/node-radius-server/commit/ef82a9991153f636de7acaa7c3024a04d7c9b2a7))
+* pkg upgrades and small fixes ([5290ac3](https://github.com/simllll/node-radius-server/commit/5290ac37c0da907b2e59a0b2cf20a8f8e473baca))
+* remove empty bytes from password buffer in StaticAuth [#116](https://github.com/simllll/node-radius-server/issues/116) ([a06026f](https://github.com/simllll/node-radius-server/commit/a06026f8876656bb7bc5bb6218cf1550e4ea9945))
+
 ## [1.2.0](https://github.com/simllll/node-radius-server/compare/v1.1.10...v1.2.0) (2021-01-23)
 
 
