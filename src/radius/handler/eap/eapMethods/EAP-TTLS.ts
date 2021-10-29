@@ -68,7 +68,7 @@ export class EAPTTLS implements IEAPMethod {
 		newResponse = true,
 		maxSize = (MAX_RADIUS_ATTRIBUTE_SIZE - 5) * 4
 	): Buffer {
-		log('maxSize', maxSize);
+		log('maxSize', data?.length, ' > ', maxSize);
 
 		/* it's the first one and we have more, therefore include length */
 		const includeLength = maxSize > 0 && data && newResponse && data.length > maxSize;
@@ -244,7 +244,7 @@ export class EAPTTLS implements IEAPMethod {
 	): IPacketHandlerResult {
 		const buffer = Buffer.from([
 			success ? 3 : 4, // 3.. success, 4... failure
-			identifier + 1,
+			identifier, // + 1 (do use same identifier as before for final message)
 			0, // length (1/2)
 			4, //  length (2/2)
 		]);
@@ -300,7 +300,7 @@ export class EAPTTLS implements IEAPMethod {
 		}
 		this.lastProcessedIdentifier.set(stateID, identifier);
 		try {
-			const { data } = this.decodeTTLSMessage(msg);
+			const { data, msglength } = this.decodeTTLSMessage(msg);
 
 			// check if no data package is there and we have something in the queue, if so.. empty the queue first
 			if (!data || data.length === 0) {
@@ -386,11 +386,58 @@ export class EAPTTLS implements IEAPMethod {
 				);
 			};
 
+			let tlsbuf = Buffer.from([]);
+			let sendChunk = Buffer.from([]);
+
 			const responseHandler = (encryptedResponseData: Buffer) => {
+				// Parse TLS record header
+				tlsbuf = Buffer.concat([tlsbuf, encryptedResponseData]);
+
+				while (tlsbuf.length > 5) {
+					if (tlsbuf.length < 5) {
+						// not even so much data to read a header
+						log(`Not enough data length! tlsbuf.length = ${tlsbuf.length} < 5`);
+						break;
+					}
+
+					// Parse TLS record header
+					// https://datatracker.ietf.org/doc/html/rfc5246
+
+					// SSL3_RT_CHANGE_CIPHER_SPEC      20   (x'14')
+					// SSL3_RT_ALERT                   21   (x'15')
+					// SSL3_RT_HANDSHAKE               22   (x'16')
+					// SSL3_RT_APPLICATION_DATA        23   (x'17')
+					// TLS1_RT_HEARTBEAT               24   (x'18')
+					const tlsContentType = tlsbuf.readUInt8(0);
+
+					// TLS1_VERSION           x'0301'
+					// TLS1_1_VERSION         x'0302'
+					// TLS1_2_VERSION         x'0303'
+					const tlsVersion = tlsbuf.readUInt16BE(1);
+
+					// Length of data in the record (excluding the header itself).
+					const tlsLength = tlsbuf.readUInt16BE(3);
+					log(
+						`TLS contentType = ${tlsContentType} version = 0x${tlsVersion.toString(
+							16
+						)} tlsLength = ${tlsLength}, tlsBufLength = ${tlsbuf.length}`
+					);
+
+					if (tlsbuf.length < tlsLength + 5) {
+						log(`Not enough data length! tlsbuf.length < ${tlsbuf.length} < ${tlsLength + 5}`);
+						break;
+					}
+					sendChunk = Buffer.concat([sendChunk, tlsbuf.slice(0, tlsLength + 5)]);
+					tlsbuf = tlsbuf.slice(tlsLength + 5);
+				}
+
+				log('Maybe it is end of TLS burst.', tlsbuf.length);
+				log(`sendChunk sz=${sendChunk.length}`);
+
 				log('complete');
 				// send back...
 				sendResponsePromise.resolve(
-					this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData)
+					this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, sendChunk)
 				);
 			};
 

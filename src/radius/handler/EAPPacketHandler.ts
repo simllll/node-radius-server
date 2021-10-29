@@ -60,9 +60,13 @@ export class EAPPacketHandler implements IPacketHandler {
 
 							// start identify
 							if (currentState.validMethods.length > 0) {
+								log(
+									`using next valid method: EAP Type = ${currentState.validMethods[0].getEAPType()}`
+								);
 								return currentState.validMethods[0].identify(identifier, stateID, data);
 							}
 
+							log('no valid method left, sending NAK');
 							return buildEAPResponse(identifier, 3); // NAK
 						case 2: // notification
 							log('>>>>>>>>>>>> REQUEST FROM CLIENT: notification', {});
@@ -76,15 +80,17 @@ export class EAPPacketHandler implements IPacketHandler {
 						case 254: // expanded type
 							console.error('not implemented type', type);
 							break;
-						case 3: // nak
-							// console.log('got NAK', data);
+						case 3: // NAK
+							log('got NAK', data);
 							if (data) {
-								// if there is data, each data octect reprsents a eap method the clients supports,
+								// if there is data, each data octect represents an eap method the clients supports,
 								// kick out all unsupported ones
 								const supportedEAPMethods: number[] = [];
 								for (const supportedMethod of data) {
 									supportedEAPMethods.push(supportedMethod);
 								}
+
+								log('all supportedEAPMethods by client', supportedEAPMethods);
 
 								currentState.validMethods = currentState.validMethods.filter(
 									(method) => supportedEAPMethods.includes(method.getEAPType()) // kick it out?
@@ -118,8 +124,20 @@ export class EAPPacketHandler implements IPacketHandler {
 								method.getEAPType()
 							);
 
+							if (serverSupportedMethods.length === 0) {
+								/**
+								 * https://www.ietf.org/rfc/rfc3748.txt
+								 * Type zero (0) is used to indicate that the sender has
+								 *	no viable alternatives, and therefore the authenticator SHOULD NOT
+								 *	send another Request after receiving a Nak Response containing a
+								 *	zero value.
+								 */
+								console.error('unsupported type', type, `stopping conversation`);
+								// stop the conversation
+								return {};
+								// return buildEAPResponse(identifier, 4); // NAK
+							}
 							console.error('unsupported type', type, `requesting: ${serverSupportedMethods}`);
-
 							return buildEAPResponse(identifier, 3, Buffer.from(serverSupportedMethods));
 						}
 					}
