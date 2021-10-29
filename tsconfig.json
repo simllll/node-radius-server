@@ -6,7 +6,7 @@
 		// target settings for node js
 		"module": "commonjs",
 		"target": "es2018",
-		"lib": ["es2018"],
+		"lib": ["es2018", "dom"],
 
 		// other best practice configs
 		"moduleResolution": "node",

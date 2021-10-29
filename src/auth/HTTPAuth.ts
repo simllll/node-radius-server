@@ -1,4 +1,4 @@
-import axios from 'axios';
+import haxios from 'haxios';
 import { IAuthentication } from '../types/Authentication';
 
 interface IHTTPAuthOptions {
@@ -13,7 +13,7 @@ export class HTTPAuth implements IAuthentication {
 	}
 
 	async authenticate(username: string, password: string) {
-		const result = await axios.post(
+		const result = await haxios.post(
 			this.url,
 			{
 				username,
