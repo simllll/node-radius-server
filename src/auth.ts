@@ -8,7 +8,7 @@ const cacheStrategy = new ExpirationStrategy(new MemoryStorage());
  * an application layer for caching credentials
  */
 export class Authentication implements IAuthentication {
-	cache = new NodeCache();
+	private cache = new NodeCache();
 
 	constructor(private authenticator: IAuthentication) {}
 
@@ -23,7 +23,7 @@ export class Authentication implements IAuthentication {
 
 		const authResult = await this.authenticator.authenticate(username, password);
 		console.log(`Auth Result for user ${username}`, authResult ? 'SUCCESS' : 'Failure');
-		this.cache.set(cacheKey, authResult, authResult ? 86400 : 60); // cache for one day on success, otherwise just for 60 seconds
+		this.cache.set(cacheKey, !!authResult, authResult ? 86400 : 60); // cache for one day on success, otherwise just for 60 seconds
 
 		return authResult;
 	}

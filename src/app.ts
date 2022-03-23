@@ -57,20 +57,24 @@ console.log(`Auth Config: ${JSON.stringify(argv.authenticationOptions, undefined
 	const radiusService = new RadiusService(config.secret, authentication);
 
 	server.on('message', async (msg, rinfo) => {
-		const response = await radiusService.handleMessage(msg);
+		try {
+			const response = await radiusService.handleMessage(msg);
 
-		if (response) {
-			server.sendToClient(
-				response.data,
-				rinfo.port,
-				rinfo.address,
-				(err, _bytes) => {
-					if (err) {
-						console.log('Error sending response to ', rinfo);
-					}
-				},
-				response.expectAcknowledgment
-			);
+			if (response) {
+				server.sendToClient(
+					response.data,
+					rinfo.port,
+					rinfo.address,
+					(err, _bytes) => {
+						if (err) {
+							console.log('Error sending response to ', rinfo);
+						}
+					},
+					response.expectAcknowledgment
+				);
+			}
+		} catch (err) {
+			console.error('err', err);
 		}
 	});
 

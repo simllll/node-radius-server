@@ -4,9 +4,9 @@
 import * as tls from 'tls';
 import * as NodeCache from 'node-cache';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { attr_id_to_name, attr_name_to_id } from 'radius';
+import * as radius from 'radius';
 import debug from 'debug';
+import * as config from '../../../../../config';
 
 import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../../tls/crypt';
 import {
@@ -19,7 +19,6 @@ import {
 import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../../helpers';
 import { IEAPMethod } from '../../../../types/EAPMethod';
 import { IAuthentication } from '../../../../types/Authentication';
-import { secret } from '../../../../../config';
 
 const log = debug('radius:eap:ttls');
 
@@ -257,6 +256,43 @@ export class EAPTTLS implements IEAPMethod {
 			attributes.push(['User-Name', packet.attributes['User-Name'].toString()]);
 		}
 
+		if (success && config.vlan !== undefined) {
+			// Tunnel-Pvt-Group-ID (81)
+			attributes.push(['Tunnel-Private-Group-Id', Buffer.from([3, 0x00, config.vlan])]);
+			/**
+			 * https://www.rfc-editor.org/rfc/rfc2868.txt
+			 * // Tunnel-Type (64)
+			 *  	1      Point-to-Point Tunneling Protocol (PPTP) [1]
+			 *    2      Layer Two Forwarding (L2F) [2]
+			 *    3      Layer Two Tunneling Protocol (L2TP) [3]
+			 *    4      Ascend Tunnel Management Protocol (ATMP) [4]
+			 *    5      Virtual Tunneling Protocol (VTP)
+			 *    6      IP Authentication Header in the Tunnel-mode (AH) [5]
+			 *    7      IP-in-IP Encapsulation (IP-IP) [6]
+			 *    8      Minimal IP-in-IP Encapsulation (MIN-IP-IP) [7]
+			 *    9      IP Encapsulating Security Payload in the Tunnel-mode (ESP) [8]
+			 *    10     Generic Route Encapsulation (GRE) [9]
+			 *    11     Bay Dial Virtual Services (DVS)
+			 *    12     IP-in-IP Tunneling [10]
+			 */
+
+			attributes.push(['Tunnel-Type', Buffer.from([6, 0x00, 0, 0, 5])]);
+
+			/**
+			 * // Tunnel-Medium-Type (65)
+			 *  	1      IPv4 (IP version 4)
+			 *    2      IPv6 (IP version 6)
+			 *    3      NSAP
+			 *    4      HDLC (8-bit multidrop)
+			 *    5      BBN 1822
+			 *    6      802 (includes all 802 media plus Ethernet "canonical format")
+			 *    7      E.163 (POTS)
+			 *    8      E.164 (SMDS, Frame Relay, ATM)
+			 */
+
+			attributes.push(['Tunnel-Medium-Type', Buffer.from([6, 0x00, 0, 0, 6])]);
+		}
+
 		if (tlsHasExportKeyingMaterial(socket)) {
 			const keyingMaterial = socket.exportKeyingMaterial(128, 'ttls keying material');
 
@@ -267,13 +303,13 @@ export class EAPTTLS implements IEAPMethod {
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[[16, encodeTunnelPW(keyingMaterial.slice(64), packet.authenticator, secret)]],
+				[[16, encodeTunnelPW(keyingMaterial.slice(64), packet.authenticator, config.secret)]],
 			]); //  MS-MPPE-Send-Key
 
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[[17, encodeTunnelPW(keyingMaterial.slice(0, 64), packet.authenticator, secret)]],
+				[[17, encodeTunnelPW(keyingMaterial.slice(0, 64), packet.authenticator, config.secret)]],
 			]); // MS-MPPE-Recv-Key
 		} else {
 			console.error(
@@ -300,7 +336,7 @@ export class EAPTTLS implements IEAPMethod {
 		}
 		this.lastProcessedIdentifier.set(stateID, identifier);
 		try {
-			const { data, msglength } = this.decodeTTLSMessage(msg);
+			const { data } = this.decodeTTLSMessage(msg);
 
 			// check if no data package is there and we have something in the queue, if so.. empty the queue first
 			if (!data || data.length === 0) {
@@ -339,7 +375,7 @@ export class EAPTTLS implements IEAPMethod {
 				// build attributes for packet handler
 				const attributes: IPacketAttributes = {};
 				AVPs.forEach((avp) => {
-					attributes[attr_id_to_name(avp.type)] = avp.data;
+					attributes[(radius as any).attr_id_to_name(avp.type)] = avp.data;
 				});
 
 				attributes.State = `${stateID}-inner`;
@@ -382,7 +418,7 @@ export class EAPTTLS implements IEAPMethod {
 
 				connection.events.emit(
 					'encrypt',
-					this.buildAVP(attr_name_to_id('EAP-Message'), eapMessage[1] as Buffer)
+					this.buildAVP((radius as any).attr_name_to_id('EAP-Message'), eapMessage[1] as Buffer)
 				);
 			};
 
