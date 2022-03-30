@@ -1,7 +1,7 @@
 import { IAuthentication } from '../types/Authentication';
 
 interface IStaticAuthOtions {
-	validCrentials: {
+	validCredentials: {
 		username: string;
 		password: string;
 	}[];
@@ -11,7 +11,7 @@ export class StaticAuth implements IAuthentication {
 	private validCredentials: { username: string; password: string }[];
 
 	constructor(options: IStaticAuthOtions) {
-		this.validCredentials = options.validCrentials;
+		this.validCredentials = options.validCredentials;
 	}
 
 	async authenticate(username: string, password: string) {

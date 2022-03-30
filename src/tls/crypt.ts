@@ -70,7 +70,7 @@ export function startTLSServer(): ITLSServer {
 	});
 
 	encrypted.on('data', (data: Buffer) => {
-		// log('encrypted data', data, data.toString());
+		log('encrypted data', data, data.toString());
 		emitter.emit('response', data);
 	});
 

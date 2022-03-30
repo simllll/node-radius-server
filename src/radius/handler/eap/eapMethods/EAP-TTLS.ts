@@ -53,6 +53,21 @@ export class EAPTTLS implements IEAPMethod {
 	}
 
 	identify(identifier: number, stateID: string): IPacketHandlerResult {
+		/**
+		 *  Flags
+		 *         0   1   2   3   4   5   6   7
+		 *       +---+---+---+---+---+---+---+---+
+		 *       | L | M | S | R | R |     V     |
+		 *       +---+---+---+---+---+---+---+---+
+		 *
+		 *       L = Length included
+		 *       M = More fragments
+		 *       S = Start
+		 *       R = Reserved
+		 *       V = Version (000 for EAP-TTLSv0)
+		 *
+		 *  0x20 => means start (=00100000)
+		 */
 		return this.buildEAPTTLSResponse(identifier, 21, 0x20, stateID);
 	}
 
@@ -251,14 +266,44 @@ export class EAPTTLS implements IEAPMethod {
 		const attributes: any[] = [];
 		attributes.push(['EAP-Message', buffer]);
 
+		/* do not send username on auth response
 		if (packet.attributes && packet.attributes['User-Name']) {
 			// reappend username to response
 			attributes.push(['User-Name', packet.attributes['User-Name'].toString()]);
-		}
+		} */
 
 		if (success && config.vlan !== undefined) {
 			// Tunnel-Pvt-Group-ID (81)
-			attributes.push(['Tunnel-Private-Group-Id', Buffer.from([3, 0x00, config.vlan])]);
+			/**
+			 *  A summary of the Tunnel-Private-Group-ID Attribute format is shown
+			 *    below.  The fields are transmitted from left to right.
+			 *
+			 *     0                   1                   2                   3
+			 *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+			 *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+			 *    |      Type     |    Length     |     Tag       |   String ...
+			 *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+			 *
+			 *    Type
+			 *       81 for Tunnel-Private-Group-ID.
+			 *
+			 *    Length
+			 *       >= 3
+			 *
+			 *    Tag
+			 *       The Tag field is one octet in length and is intended to provide a
+			 *       means of grouping attributes in the same packet which refer to the
+			 *       same tunnel.  If the value of the Tag field is greater than 0x00
+			 *       and less than or equal to 0x1F, it SHOULD be interpreted as
+			 *       indicating which tunnel (of several alternatives) this attribute
+			 *       pertains.  If the Tag field is greater than 0x1F, it SHOULD be
+			 *       interpreted as the first byte of the following String field.
+			 *
+			 *    String
+			 *       This field must be present.  The group is represented by the
+			 *       String field.  There is no restriction on the format of group IDs.
+			 */
+			attributes.push(['Tunnel-Private-Group-Id', Buffer.from(String(config.vlan))]);
 			/**
 			 * https://www.rfc-editor.org/rfc/rfc2868.txt
 			 * // Tunnel-Type (64)
@@ -274,9 +319,10 @@ export class EAPTTLS implements IEAPMethod {
 			 *    10     Generic Route Encapsulation (GRE) [9]
 			 *    11     Bay Dial Virtual Services (DVS)
 			 *    12     IP-in-IP Tunneling [10]
+			 *    13		 VLAN
 			 */
 
-			attributes.push(['Tunnel-Type', Buffer.from([6, 0x00, 0, 0, 5])]);
+			attributes.push(['Tunnel-Type', Buffer.from([0x00, 0, 0, 13])]);
 
 			/**
 			 * // Tunnel-Medium-Type (65)
@@ -290,7 +336,17 @@ export class EAPTTLS implements IEAPMethod {
 			 *    8      E.164 (SMDS, Frame Relay, ATM)
 			 */
 
-			attributes.push(['Tunnel-Medium-Type', Buffer.from([6, 0x00, 0, 0, 6])]);
+			attributes.push(['Tunnel-Medium-Type', Buffer.from([0x00, 0, 0, 6])]);
+
+			attributes.push([
+				'Framed-Protocol', // 7
+				Buffer.from([0, 0, 0, 1]),
+			]);
+
+			attributes.push([
+				'Service-Type', // 6
+				Buffer.from([0, 0, 0, 2]),
+			]);
 		}
 
 		if (tlsHasExportKeyingMaterial(socket)) {
@@ -471,6 +527,7 @@ export class EAPTTLS implements IEAPMethod {
 				log(`sendChunk sz=${sendChunk.length}`);
 
 				log('complete');
+
 				// send back...
 				sendResponsePromise.resolve(
 					this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, sendChunk)
