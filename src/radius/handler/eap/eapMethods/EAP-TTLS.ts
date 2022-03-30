@@ -416,6 +416,7 @@ export class EAPTTLS implements IEAPMethod {
 					// cleanup socket
 					log('ENDING SOCKET');
 					this.openTLSSockets.del(stateID);
+					this.lastProcessedIdentifier.del(stateID);
 				});
 			}
 
