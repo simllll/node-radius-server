@@ -3,19 +3,9 @@ import * as tls from 'tls';
 import { createSecureContext } from 'tls';
 import * as crypto from 'crypto';
 import * as DuplexPair from 'native-duplexpair';
-import debug from 'debug';
 import * as NodeCache from 'node-cache';
+import { ILogger } from '../interfaces/Logger';
 // import * as constants from 'constants';
-import * as config from '../../config';
-
-const log = debug('radius:tls');
-
-// https://nodejs.org/api/tls.html
-const tlsOptions: tls.SecureContextOptions = {
-	...config.certificate,
-};
-log('tlsOptions', tlsOptions);
-const secureContext = createSecureContext(tlsOptions);
 
 export interface ITLSServer {
 	events: events.EventEmitter;
@@ -24,7 +14,11 @@ export interface ITLSServer {
 
 const resumeSessions = new NodeCache({ stdTTL: 86400 }); // session reidentification maximum 1 day
 
-export function startTLSServer(): ITLSServer {
+// https://nodejs.org/api/tls.html
+export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILogger): ITLSServer {
+	logger.debug('tlsOptions', tlsOptions);
+	const secureContext = createSecureContext(tlsOptions);
+
 	const duplexpair = new DuplexPair();
 	const emitter = new events.EventEmitter();
 
@@ -40,7 +34,7 @@ export function startTLSServer(): ITLSServer {
 
 	// for older tls versions without ticketing support
 	cleartext.on('newSession', (sessionId: Buffer, sessionData: Buffer, callback: () => void) => {
-		log(`TLS new session (${sessionId.toString('hex')})`);
+		logger.debug(`TLS new session (${sessionId.toString('hex')})`);
 
 		resumeSessions.set(sessionId.toString('hex'), sessionData);
 		callback();
@@ -52,7 +46,7 @@ export function startTLSServer(): ITLSServer {
 			const resumedSession = (resumeSessions.get(sessionId.toString('hex')) as Buffer) || null;
 
 			if (resumedSession) {
-				log(`TLS resumed session (${sessionId.toString('hex')})`);
+				logger.debug(`TLS resumed session (${sessionId.toString('hex')})`);
 			}
 
 			callback(null, resumedSession);
@@ -70,7 +64,7 @@ export function startTLSServer(): ITLSServer {
 	});
 
 	encrypted.on('data', (data: Buffer) => {
-		// log('encrypted data', data, data.toString());
+		// logger.debug('encrypted data', data, data.toString());
 		emitter.emit('response', data);
 	});
 
@@ -78,30 +72,30 @@ export function startTLSServer(): ITLSServer {
 		const cipher = cleartext.getCipher();
 
 		if (cipher) {
-			log(`TLS negotiated (${cipher.name}, ${cipher.version})`);
+			logger.debug(`TLS negotiated (${cipher.name}, ${cipher.version})`);
 		}
 
 		cleartext.on('data', (data: Buffer) => {
-			// log('cleartext data', data, data.toString());
+			// logger.debug('cleartext data', data, data.toString());
 			emitter.emit('incoming', data);
 		});
 
 		cleartext.once('close', (_data: Buffer) => {
-			log('cleartext close');
+			logger.debug('cleartext close');
 			emitter.emit('end');
 		});
 
 		cleartext.on('keylog', (line) => {
-			log('############ KEYLOG #############', line);
+			logger.debug('############ KEYLOG #############', line);
 			// cleartext.getTicketKeys()
 		});
 
-		log('*********** new TLS connection established / secured ********');
+		logger.debug('*********** new TLS connection established / secured ********');
 		emitter.emit('secured', cleartext.isSessionReused());
 	});
 
 	cleartext.on('error', (err?: Error) => {
-		log('cleartext error', err);
+		logger.debug('cleartext error', err);
 
 		encrypted.destroy();
 		cleartext.destroy(err);

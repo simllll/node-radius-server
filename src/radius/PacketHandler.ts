@@ -1,23 +1,33 @@
-import { IPacket, IPacketHandler, IPacketHandlerResult } from '../types/PacketHandler';
-import { IAuthentication } from '../types/Authentication';
+import * as tls from 'tls';
+
+import { IPacket, IPacketHandler, IPacketHandlerResult } from '../interfaces/PacketHandler';
+import { IAuthentication } from '../interfaces/Authentication';
 import { EAPPacketHandler } from './handler/EAPPacketHandler';
 import { EAPTTLS } from './handler/eap/eapMethods/EAP-TTLS';
 import { EAPGTC } from './handler/eap/eapMethods/EAP-GTC';
 import { EAPMD5 } from './handler/eap/eapMethods/EAP-MD5';
 import { UserPasswordPacketHandler } from './handler/UserPasswordPacketHandler';
+import { ILogger } from '../interfaces/Logger';
 
 export class PacketHandler implements IPacketHandler {
 	packetHandlers: IPacketHandler[] = [];
 
-	constructor(authentication: IAuthentication) {
+	constructor(
+		authentication: IAuthentication,
+		tlsOptions: tls.SecureContextOptions,
+		private logger: ILogger
+	) {
 		this.packetHandlers.push(
-			new EAPPacketHandler([
-				new EAPTTLS(authentication, this),
-				new EAPGTC(authentication),
-				new EAPMD5(authentication),
-			])
+			new EAPPacketHandler(
+				[
+					new EAPTTLS(authentication, tlsOptions, this, logger),
+					new EAPGTC(authentication, logger),
+					new EAPMD5(authentication, logger),
+				],
+				logger
+			)
 		);
-		this.packetHandlers.push(new UserPasswordPacketHandler(authentication));
+		this.packetHandlers.push(new UserPasswordPacketHandler(authentication, logger));
 	}
 
 	async handlePacket(packet: IPacket, handlingType?: number) {

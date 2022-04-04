@@ -1,13 +1,11 @@
 // https://tools.ietf.org/html/rfc3748#section-4.1
 
 import * as NodeCache from 'node-cache';
-import debug from 'debug';
 import { makeid } from '../../helpers';
-import { IPacket, IPacketHandler, IPacketHandlerResult } from '../../types/PacketHandler';
-import { IEAPMethod } from '../../types/EAPMethod';
+import { IPacket, IPacketHandler, IPacketHandlerResult } from '../../interfaces/PacketHandler';
+import { IEAPMethod } from '../../interfaces/EAPMethod';
 import { buildEAPResponse, decodeEAPHeader } from './eap/EAPHelper';
-
-const log = debug('radius:eap');
+import { ILogger } from '../../interfaces/Logger';
 
 export class EAPPacketHandler implements IPacketHandler {
 	private identities = new NodeCache({ useClones: false, stdTTL: 60 }); // queue data maximum for 60 seconds
@@ -15,7 +13,7 @@ export class EAPPacketHandler implements IPacketHandler {
 	// 	private eapConnectionStates: { [key: string]: { validMethods: IEAPMethod[] } } = {};
 	private eapConnectionStates = new NodeCache({ useClones: false, stdTTL: 3600 }); // max for one hour
 
-	constructor(private eapMethods: IEAPMethod[]) {}
+	constructor(private eapMethods: IEAPMethod[], private logger: ILogger) {}
 
 	async handlePacket(packet: IPacket, handlingType?: number): Promise<IPacketHandlerResult> {
 		if (!packet.attributes['EAP-Message']) {
@@ -35,10 +33,10 @@ export class EAPPacketHandler implements IPacketHandler {
 		let msg = packet.attributes['EAP-Message'] as Buffer;
 
 		if (Array.isArray(msg) && !(packet.attributes['EAP-Message'] instanceof Buffer)) {
-			// log('multiple EAP Messages received, concat', msg.length);
+			// this.logger.debug('multiple EAP Messages received, concat', msg.length);
 			const allMsgs = msg as Buffer[];
 			msg = Buffer.concat(allMsgs);
-			// log('final EAP Message', msg);
+			// this.logger.debug('final EAP Message', msg);
 		}
 
 		try {
@@ -51,37 +49,41 @@ export class EAPPacketHandler implements IPacketHandler {
 				case 2: // for response
 					switch (type) {
 						case 1: // identifiy
-							log('>>>>>>>>>>>> REQUEST FROM CLIENT: IDENTIFY', stateID, data.toString());
+							this.logger.debug(
+								'>>>>>>>>>>>> REQUEST FROM CLIENT: IDENTIFY',
+								stateID,
+								data.toString()
+							);
 							if (data) {
 								this.identities.set(stateID, data); // use token til binary 0.);
 							} else {
-								log('no msg');
+								this.logger.debug('no msg');
 							}
 
 							// start identify
 							if (currentState.validMethods.length > 0) {
-								log(
+								this.logger.debug(
 									`using next valid method: EAP Type = ${currentState.validMethods[0].getEAPType()}`
 								);
 								return currentState.validMethods[0].identify(identifier, stateID, data);
 							}
 
-							log('no valid method left, sending NAK');
+							this.logger.debug('no valid method left, sending NAK');
 							return buildEAPResponse(identifier, 3); // NAK
 						case 2: // notification
-							log('>>>>>>>>>>>> REQUEST FROM CLIENT: notification', {});
-							console.info('notification');
+							this.logger.debug('>>>>>>>>>>>> REQUEST FROM CLIENT: notification', {});
+							this.logger.debug('notification');
 							break;
 						case 4: // md5-challenge
-							log('>>>>>>>>>>>> REQUEST FROM CLIENT: md5-challenge', {});
+							this.logger.debug('>>>>>>>>>>>> REQUEST FROM CLIENT: md5-challenge', {});
 
-							console.info('md5-challenge');
+							this.logger.debug('md5-challenge');
 							break;
 						case 254: // expanded type
-							console.error('not implemented type', type);
+							this.logger.error('not implemented type', type);
 							break;
 						case 3: // NAK
-							log('got NAK', data);
+							this.logger.debug('got NAK', data);
 							if (data) {
 								// if there is data, each data octect represents an eap method the clients supports,
 								// kick out all unsupported ones
@@ -90,7 +92,7 @@ export class EAPPacketHandler implements IPacketHandler {
 									supportedEAPMethods.push(supportedMethod);
 								}
 
-								log('all supportedEAPMethods by client', supportedEAPMethods);
+								this.logger.debug('all supportedEAPMethods by client', supportedEAPMethods);
 
 								currentState.validMethods = currentState.validMethods.filter(
 									(method) => supportedEAPMethods.includes(method.getEAPType()) // kick it out?
@@ -132,28 +134,28 @@ export class EAPPacketHandler implements IPacketHandler {
 								 *	send another Request after receiving a Nak Response containing a
 								 *	zero value.
 								 */
-								console.error('unsupported type', type, `stopping conversation`);
+								this.logger.error('unsupported type', type, `stopping conversation`);
 								// stop the conversation
 								return {};
 								// return buildEAPResponse(identifier, 4); // NAK
 							}
-							console.error('unsupported type', type, `requesting: ${serverSupportedMethods}`);
+							this.logger.error('unsupported type', type, `requesting: ${serverSupportedMethods}`);
 							return buildEAPResponse(identifier, 3, Buffer.from(serverSupportedMethods));
 						}
 					}
 					break;
 				case 3:
-					log('Client Auth Success');
+					this.logger.debug('Client Auth Success');
 					break;
 				case 4:
-					log('Client Auth FAILURE');
+					this.logger.debug('Client Auth FAILURE');
 					break;
 				default:
 			}
 			// silently ignore;
 			return {};
 		} catch (err) {
-			console.error(
+			this.logger.error(
 				'decoding of (generic) EAP package failed',
 				msg,
 				err,

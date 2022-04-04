@@ -1,13 +1,11 @@
 // https://tools.ietf.org/html/rfc5281 TTLS v0
 // https://tools.ietf.org/html/draft-funk-eap-ttls-v1-00 TTLS v1 (not implemented)
 /* eslint-disable no-bitwise */
-import debug from 'debug';
-import { IPacketHandlerResult, PacketResponseCode } from '../../../../types/PacketHandler';
-import { IEAPMethod } from '../../../../types/EAPMethod';
-import { IAuthentication } from '../../../../types/Authentication';
+import { IPacketHandlerResult, PacketResponseCode } from '../../../../interfaces/PacketHandler';
+import { IEAPMethod } from '../../../../interfaces/EAPMethod';
+import { IAuthentication } from '../../../../interfaces/Authentication';
 import { buildEAPResponse, decodeEAPHeader } from '../EAPHelper';
-
-const log = debug('radius:eap:gtc');
+import { ILogger } from '../../../../interfaces/Logger';
 
 export class EAPGTC implements IEAPMethod {
 	getEAPType(): number {
@@ -26,7 +24,7 @@ export class EAPGTC implements IEAPMethod {
 		return buildEAPResponse(identifier, 6, Buffer.from('Password: '));
 	}
 
-	constructor(private authentication: IAuthentication) {}
+	constructor(private authentication: IAuthentication, private logger: ILogger) {}
 
 	async handleMessage(
 		_identifier: number,
@@ -46,8 +44,8 @@ export class EAPGTC implements IEAPMethod {
 				throw new Error('no username');
 			}
 
-			log('username', username, username.toString());
-			log('token', token, token.toString());
+			this.logger.debug('username', username, username.toString());
+			this.logger.debug('token', token, token.toString());
 
 			const success = await this.authentication.authenticate(username.toString(), token.toString());
 
@@ -56,7 +54,7 @@ export class EAPGTC implements IEAPMethod {
 				attributes: (success && [['User-Name', username]]) || undefined,
 			};
 		} catch (err) {
-			console.error('decoding of EAP-GTC package failed', msg, err);
+			this.logger.error('decoding of EAP-GTC package failed', msg, err);
 			return {
 				code: PacketResponseCode.AccessReject,
 			};

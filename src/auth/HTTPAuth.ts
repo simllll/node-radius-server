@@ -1,5 +1,6 @@
 import haxios from 'haxios';
-import { IAuthentication } from '../types/Authentication';
+import { IAuthentication } from '../interfaces/Authentication';
+import { ILogger } from '../interfaces/Logger';
 
 interface IHTTPAuthOptions {
 	url: string;
@@ -8,7 +9,7 @@ interface IHTTPAuthOptions {
 export class HTTPAuth implements IAuthentication {
 	private url: string;
 
-	constructor(config: IHTTPAuthOptions) {
+	constructor(config: IHTTPAuthOptions, private logger: ILogger) {
 		this.url = config.url;
 	}
 
@@ -30,7 +31,7 @@ export class HTTPAuth implements IAuthentication {
 			return true;
 		}
 
-		console.log(`HTTP authentication failed, response code: ${result.status}`);
+		this.logger.log(`HTTP authentication failed, response code: ${result.status}`);
 
 		return false;
 	}

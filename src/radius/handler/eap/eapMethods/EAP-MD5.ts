@@ -2,10 +2,10 @@
 // https://tools.ietf.org/html/draft-funk-eap-ttls-v1-00 TTLS v1 (not implemented)
 /* eslint-disable no-bitwise */
 import { RadiusPacket } from 'radius';
-import debug from 'debug';
-import { IPacketHandlerResult } from '../../../../types/PacketHandler';
-import { IEAPMethod } from '../../../../types/EAPMethod';
-import { IAuthentication } from '../../../../types/Authentication';
+import { IPacketHandlerResult } from '../../../../interfaces/PacketHandler';
+import { IEAPMethod } from '../../../../interfaces/EAPMethod';
+import { IAuthentication } from '../../../../interfaces/Authentication';
+import { ILogger } from '../../../../interfaces/Logger';
 
 export class EAPMD5 implements IEAPMethod {
 	getEAPType(): number {
@@ -17,7 +17,7 @@ export class EAPMD5 implements IEAPMethod {
 		return {};
 	}
 
-	constructor(private authentication: IAuthentication) {}
+	constructor(private authentication: IAuthentication, private logger: ILogger) {}
 
 	async handleMessage(
 		_identifier: number,
@@ -27,7 +27,7 @@ export class EAPMD5 implements IEAPMethod {
 	): Promise<IPacketHandlerResult> {
 		// not implemented
 
-		debug('eap md5 not implemented...');
+		this.logger.debug('eap md5 not implemented...');
 
 		return {};
 	}

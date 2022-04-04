@@ -1,12 +1,11 @@
 import { ClientOptions, createClient } from 'ldapjs';
-import debug from 'debug';
 import * as tls from 'tls';
 import * as fs from 'fs';
-import { IAuthentication } from '../types/Authentication';
+import { IAuthentication } from '../interfaces/Authentication';
+import { ILogger } from '../interfaces/Logger';
 
 const usernameFields = ['posixUid', 'mail'];
 
-const log = debug('radius:auth:google-ldap');
 // TLS:
 // https://github.com/ldapjs/node-ldapjs/issues/307
 
@@ -38,7 +37,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 
 	searchBase: string;
 
-	constructor(config: IGoogleLDAPAuthOptions) {
+	constructor(config: IGoogleLDAPAuthOptions, private logger: ILogger) {
 		this.base = config.base;
 		this.searchBase = config.searchBase || `ou=users,${this.base}`;
 
@@ -55,7 +54,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 		};
 
 		this.fetchDNs().catch((err) => {
-			console.error('fatal error google ldap auth, cannot fetch DNs', err);
+			this.logger.error('fatal error google ldap auth, cannot fetch DNs', err);
 		});
 	}
 
@@ -64,7 +63,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 
 		await new Promise<void>((resolve, reject) => {
 			const ldapDNClient = createClient(this.config).on('error', (error) => {
-				console.error('Error in ldap', error);
+				this.logger.error('Error in ldap', error);
 				reject(error);
 			});
 
@@ -80,7 +79,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 					}
 
 					res.on('searchEntry', (entry) => {
-						// log('entry: ' + JSON.stringify(entry.object));
+						// this.logger.debug('entry: ' + JSON.stringify(entry.object));
 						usernameFields.forEach((field) => {
 							const index = entry.object[field] as string;
 							dns[index] = entry.object.dn;
@@ -88,20 +87,20 @@ export class GoogleLDAPAuth implements IAuthentication {
 					});
 
 					res.on('searchReference', (referral) => {
-						log(`referral: ${referral.uris.join()}`);
+						this.logger.debug(`referral: ${referral.uris.join()}`);
 					});
 
 					res.on('error', (ldapErr) => {
-						console.error(`error: ${JSON.stringify(ldapErr)}`);
+						this.logger.error(`error: ${JSON.stringify(ldapErr)}`);
 						reject(ldapErr);
 					});
 
 					res.on('end', (result) => {
-						log(`ldap status: ${result?.status}`);
+						this.logger.debug(`ldap status: ${result?.status}`);
 
 						// replace with new dns
 						this.allValidDNsCache = dns;
-						// log('allValidDNsCache', this.allValidDNsCache);
+						// this.logger.debug('allValidDNsCache', this.allValidDNsCache);
 						resolve();
 					});
 				}
@@ -129,7 +128,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 		let dnsFetched = false;
 
 		if (!this.lastDNsFetch || this.lastDNsFetch < cacheValidTime || forceFetching) {
-			log('fetching dns');
+			this.logger.debug('fetching dns');
 			await this.fetchDNs();
 			dnsFetched = true;
 		}
@@ -143,8 +142,8 @@ export class GoogleLDAPAuth implements IAuthentication {
 			if (!dnsFetched && !forceFetching) {
 				return this.authenticate(username, password, count, true);
 			}
-			// console.log('this.allValidDNsCache', this.allValidDNsCache);
-			console.error(`invalid username, not found in DN: ${username}`); // , this.allValidDNsCache);
+			// this.logger.this.logger.debug('this.allValidDNsCache', this.allValidDNsCache);
+			this.logger.error(`invalid username, not found in DN: ${username}`); // , this.allValidDNsCache);
 			return false;
 		}
 
@@ -162,7 +161,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 					}
 
 					resolve(false);
-					// console.error('ldap error', err);
+					// this.logger.error('ldap error', err);
 					// reject(err);
 				}
 				if (res) resolve(res);
