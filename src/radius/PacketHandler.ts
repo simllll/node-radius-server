@@ -15,12 +15,14 @@ export class PacketHandler implements IPacketHandler {
 	constructor(
 		authentication: IAuthentication,
 		tlsOptions: tls.SecureContextOptions,
-		private logger: ILogger
+		private logger: ILogger,
+		private secret: string,
+		private vlan?: number
 	) {
 		this.packetHandlers.push(
 			new EAPPacketHandler(
 				[
-					new EAPTTLS(authentication, tlsOptions, this, logger),
+					new EAPTTLS(authentication, tlsOptions, this, logger, secret, vlan),
 					new EAPGTC(authentication, logger),
 					new EAPMD5(authentication, logger),
 				],

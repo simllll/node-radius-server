@@ -5,7 +5,6 @@ import * as tls from 'tls';
 import * as NodeCache from 'node-cache';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 import * as radius from 'radius';
-import * as config from '../../../../../config';
 
 import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../../tls/crypt';
 import {
@@ -73,7 +72,9 @@ export class EAPTTLS implements IEAPMethod {
 		private authentication: IAuthentication,
 		private tlsOptions: tls.SecureContextOptions,
 		private innerTunnel: IPacketHandler,
-		private logger: ILogger
+		private logger: ILogger,
+		private secret: string,
+		private vlan?: number
 	) {}
 
 	private buildEAPTTLS(
@@ -275,7 +276,7 @@ export class EAPTTLS implements IEAPMethod {
 			attributes.push(['User-Name', packet.attributes['User-Name'].toString()]);
 		} */
 
-		if (success && config.vlan !== undefined) {
+		if (success && this.vlan !== undefined) {
 			// Tunnel-Pvt-Group-ID (81)
 			/**
 			 *  A summary of the Tunnel-Private-Group-ID Attribute format is shown
@@ -306,7 +307,7 @@ export class EAPTTLS implements IEAPMethod {
 			 *       This field must be present.  The group is represented by the
 			 *       String field.  There is no restriction on the format of group IDs.
 			 */
-			attributes.push(['Tunnel-Private-Group-Id', Buffer.from(String(config.vlan))]);
+			attributes.push(['Tunnel-Private-Group-Id', Buffer.from(String(this.vlan))]);
 			/**
 			 * https://www.rfc-editor.org/rfc/rfc2868.txt
 			 * // Tunnel-Type (64)
@@ -362,13 +363,13 @@ export class EAPTTLS implements IEAPMethod {
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[[16, encodeTunnelPW(keyingMaterial.slice(64), packet.authenticator, config.secret)]],
+				[[16, encodeTunnelPW(keyingMaterial.slice(64), packet.authenticator, this.secret)]],
 			]); //  MS-MPPE-Send-Key
 
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[[17, encodeTunnelPW(keyingMaterial.slice(0, 64), packet.authenticator, config.secret)]],
+				[[17, encodeTunnelPW(keyingMaterial.slice(0, 64), packet.authenticator, this.secret)]],
 			]); // MS-MPPE-Recv-Key
 		} else {
 			this.logger.error(

@@ -6,13 +6,25 @@ import { PacketHandler } from './PacketHandler';
 import { UDPServer } from '../server/UDPServer';
 import { startTLSServer } from '../tls/crypt';
 import { IRadiusServerOptions } from '../interfaces/RadiusServerOptions';
+import { ConsoleLogger, LogLevel } from '../logger/ConsoleLogger';
 
 export class RadiusServer extends UDPServer {
 	private packetHandler: PacketHandler;
 
 	constructor(private options: IRadiusServerOptions) {
-		super(options.port, options.address, options.logger);
-		this.packetHandler = new PacketHandler(options.authentication, options.tlsOptions, this.logger);
+		super(
+			options.port || 1812,
+			options.address || '0.0.0.0',
+			options.logger ||
+				new ConsoleLogger(process.env.NODE_ENV === 'development' ? LogLevel.debug : LogLevel.log)
+		);
+		this.packetHandler = new PacketHandler(
+			options.authentication,
+			options.tlsOptions,
+			this.logger,
+			options.secret,
+			options.vlan
+		);
 		this.installListeners();
 	}
 
