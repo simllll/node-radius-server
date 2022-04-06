@@ -1,5 +1,6 @@
 import * as imaps from 'imap-simple';
-import { IAuthentication } from '../types/Authentication';
+import { IAuthentication } from '../interfaces/Authentication';
+import { ILogger } from '../interfaces/Logger';
 
 interface IIMAPAuthOptions {
 	host: string;
@@ -17,7 +18,7 @@ export class IMAPAuth implements IAuthentication {
 
 	private validHosts?: string[];
 
-	constructor(config: IIMAPAuthOptions) {
+	constructor(config: IIMAPAuthOptions, private logger: ILogger) {
 		this.host = config.host;
 		if (config.port !== undefined) {
 			this.port = config.port;
@@ -34,7 +35,7 @@ export class IMAPAuth implements IAuthentication {
 		if (this.validHosts) {
 			const domain = username.split('@').pop();
 			if (!domain || !this.validHosts.includes(domain)) {
-				console.info('invalid or no domain in username', username, domain);
+				this.logger.log('invalid or no domain in username', username, domain);
 				return false;
 			}
 		}
@@ -57,7 +58,7 @@ export class IMAPAuth implements IAuthentication {
 
 			connection.end();
 		} catch (err) {
-			console.error('imap auth failed', err);
+			this.logger.error('imap auth failed', err);
 		}
 		return success;
 	}

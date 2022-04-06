@@ -1,6 +1,7 @@
 import * as LdapAuth from 'ldapauth-fork';
 import * as fs from 'fs';
-import { IAuthentication } from '../types/Authentication';
+import { IAuthentication } from '../interfaces/Authentication';
+import { ILogger } from '../interfaces/Logger';
 
 interface ILDAPAuthOptions {
 	/** ldap url
@@ -29,7 +30,7 @@ interface ILDAPAuthOptions {
 export class LDAPAuth implements IAuthentication {
 	private ldap: LdapAuth;
 
-	constructor(config: ILDAPAuthOptions) {
+	constructor(config: ILDAPAuthOptions, private logger: ILogger) {
 		const tlsOptions = {
 			key: fs.readFileSync(config.tls.keyFile),
 			cert: fs.readFileSync(config.tls.certFile),
@@ -44,7 +45,7 @@ export class LDAPAuth implements IAuthentication {
 			reconnect: true,
 		});
 		this.ldap.on('error', (err) => {
-			console.error('LdapAuth: ', err);
+			this.logger.error('LdapAuth: ', err);
 		});
 	}
 
@@ -53,7 +54,7 @@ export class LDAPAuth implements IAuthentication {
 			this.ldap.authenticate(username, password, (err, user) => {
 				if (err) {
 					resolve(false);
-					console.error('ldap error', err);
+					this.logger.error('ldap error', err);
 					// reject(err);
 				}
 				if (user) resolve(user);

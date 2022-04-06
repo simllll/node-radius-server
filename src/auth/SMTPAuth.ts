@@ -1,5 +1,6 @@
 import { SMTPClient } from 'smtp-client';
-import { IAuthentication } from '../types/Authentication';
+import { IAuthentication } from '../interfaces/Authentication';
+import { ILogger } from '../interfaces/Logger';
 
 interface ISMTPAuthOptions {
 	host: string;
@@ -17,7 +18,7 @@ export class SMTPAuth implements IAuthentication {
 
 	private validHosts?: string[];
 
-	constructor(options: ISMTPAuthOptions) {
+	constructor(options: ISMTPAuthOptions, private logger: ILogger) {
 		this.host = options.host;
 
 		if (options.port !== undefined) {
@@ -37,7 +38,7 @@ export class SMTPAuth implements IAuthentication {
 		if (this.validHosts) {
 			const domain = username.split('@').pop();
 			if (!domain || !this.validHosts.includes(domain)) {
-				console.info('invalid or no domain in username', username, domain);
+				this.logger.log('invalid or no domain in username', username, domain);
 				return false;
 			}
 		}
@@ -61,7 +62,7 @@ export class SMTPAuth implements IAuthentication {
 
 			s.close(); // runs QUIT command
 		} catch (err) {
-			console.error('imap auth failed', err);
+			this.logger.error('imap auth failed', err);
 		}
 		return success;
 	}

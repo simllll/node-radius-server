@@ -1,16 +1,14 @@
-import debug from 'debug';
-import { IAuthentication } from '../../types/Authentication';
+import { IAuthentication } from '../../interfaces/Authentication';
 import {
 	IPacket,
 	IPacketHandler,
 	IPacketHandlerResult,
 	PacketResponseCode,
-} from '../../types/PacketHandler';
-
-const log = debug('radius:user-pwd');
+} from '../../interfaces/PacketHandler';
+import { ILogger } from '../../interfaces/Logger';
 
 export class UserPasswordPacketHandler implements IPacketHandler {
-	constructor(private authentication: IAuthentication) {}
+	constructor(private authentication: IAuthentication, private logger: ILogger) {}
 
 	async handlePacket(packet: IPacket): Promise<IPacketHandlerResult> {
 		const username = packet.attributes['User-Name'];
@@ -26,8 +24,8 @@ export class UserPasswordPacketHandler implements IPacketHandler {
 			return {};
 		}
 
-		log('username', username, username.toString());
-		log('token', password, password.toString());
+		this.logger.debug('username', username, username.toString());
+		this.logger.debug('token', password, password.toString());
 
 		const authenticated = await this.authentication.authenticate(
 			username.toString(),

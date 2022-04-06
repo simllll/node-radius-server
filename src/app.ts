@@ -1,81 +1,57 @@
 import * as yargs from 'yargs';
-import { UDPServer } from './server/UDPServer';
-import { RadiusService } from './radius/RadiusService';
 
 import * as config from '../config';
 import { Authentication } from './auth';
-import { IAuthentication } from './types/Authentication';
-import { startTLSServer } from './tls/crypt';
-
-/* test node version */
-const testSocket = startTLSServer();
-if (typeof testSocket.tls.exportKeyingMaterial !== 'function') {
-	console.error(`UNSUPPORTED NODE VERSION (${process.version}) FOUND!!`);
-
-	console.log('min version supported is node js 14. run "sudo npx n 14"');
-	process.exit(-1);
-}
-
-const { argv } = yargs
-	.usage('NODE RADIUS Server\nUsage: radius-server')
-	.example('radius-server --port 1812 -s radiussecret', 'start on port 1812 with a secret')
-	.default({
-		port: config.port || 1812,
-		s: config.secret || 'testing123',
-		authentication: config.authentication,
-		authenticationOptions: config.authenticationOptions,
-	})
-	.describe('port', 'RADIUS server listener port')
-	.alias('s', 'secret')
-	.describe('secret', 'RADIUS secret')
-	.number('port')
-	.string(['secret', 'authentication']) as {
-	argv: { port?: number; secret?: string; authentication?: string; authenticationOptions?: any };
-};
-
-console.log(`Listener Port: ${argv.port || 1812}`);
-console.log(`RADIUS Secret: ${argv.secret}`);
-console.log(`Auth ${argv.authentication}`);
-console.log(`Auth Config: ${JSON.stringify(argv.authenticationOptions, undefined, 3)}`);
+import { IAuthentication } from './interfaces/Authentication';
+import { RadiusServer } from './radius/RadiusServer';
+import { ConsoleLogger, LogLevel } from './logger/ConsoleLogger';
 
 (async () => {
-	/* configure auth mechansim */
+	const logger = new ConsoleLogger(
+		process.env.NODE_ENV === 'development' ? LogLevel.debug : LogLevel.log
+	);
+
+	const { argv } = yargs
+		.usage('NODE RADIUS Server\nUsage: radius-server')
+		.example('radius-server --port 1812 -s radiussecret', 'start on port 1812 with a secret')
+		.default({
+			port: config.port || 1812,
+			s: config.secret || 'testing123',
+			authentication: config.authentication,
+			authenticationOptions: config.authenticationOptions,
+		})
+		.describe('port', 'RADIUS server listener port')
+		.alias('s', 'secret')
+		.describe('secret', 'RADIUS secret')
+		.number('port')
+		.string(['secret', 'authentication']) as {
+		argv: { port?: number; secret?: string; authentication?: string; authenticationOptions?: any };
+	};
+
+	logger.log(`Listener Port: ${argv.port || 1812}`);
+	logger.log(`RADIUS Secret: ${argv.secret}`);
+	logger.log(`Auth ${argv.authentication}`);
+	logger.debug(`Auth Config: ${JSON.stringify(argv.authenticationOptions, undefined, 3)}`);
+
+	// configure auth mechanism
 	let auth: IAuthentication;
 	try {
-		const AuthMechanismus = (await import(`./auth/${config.authentication}`))[
-			config.authentication
-		];
-		auth = new AuthMechanismus(config.authenticationOptions);
+		const AuthMechanism = (await import(`./auth/${config.authentication}`))[config.authentication];
+		auth = new AuthMechanism(config.authenticationOptions);
 	} catch (err) {
-		console.error('cannot load auth mechanismus', config.authentication);
+		logger.error('cannot load auth mechanisms', config.authentication);
 		throw err;
 	}
 	// start radius server
-	const authentication = new Authentication(auth);
+	const authentication = new Authentication(auth, logger);
 
-	const server = new UDPServer(config.port);
-	const radiusService = new RadiusService(config.secret, authentication);
-
-	server.on('message', async (msg, rinfo) => {
-		try {
-			const response = await radiusService.handleMessage(msg);
-
-			if (response) {
-				server.sendToClient(
-					response.data,
-					rinfo.port,
-					rinfo.address,
-					(err, _bytes) => {
-						if (err) {
-							console.log('Error sending response to ', rinfo);
-						}
-					},
-					response.expectAcknowledgment
-				);
-			}
-		} catch (err) {
-			console.error('err', err);
-		}
+	const server = new RadiusServer({
+		secret: config.secret,
+		port: config.port,
+		address: '0.0.0.0',
+		tlsOptions: config.certificate,
+		authentication,
+		logger,
 	});
 
 	// start server

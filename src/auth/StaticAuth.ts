@@ -1,4 +1,5 @@
-import { IAuthentication } from '../types/Authentication';
+import { IAuthentication } from '../interfaces/Authentication';
+import { ILogger } from '../interfaces/Logger';
 
 interface IStaticAuthOtions {
 	validCredentials: {
@@ -10,7 +11,7 @@ interface IStaticAuthOtions {
 export class StaticAuth implements IAuthentication {
 	private validCredentials: { username: string; password: string }[];
 
-	constructor(options: IStaticAuthOtions) {
+	constructor(options: IStaticAuthOtions, private logger: ILogger) {
 		this.validCredentials = options.validCredentials;
 	}
 

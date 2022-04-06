@@ -24,11 +24,12 @@
 		"test": "mocha -r ts-node/register __tests__/**/*.test.ts",
 		"test-ttls-pap": "__tests__/eapol_test -c __tests__/ttls-pap.conf -s testing123",
 		"test-radtest": "radtest -x user pwd localhost 1812 testing123",
-		"create-certificate": "sh ./ssl/create.sh && sh ./ssl/sign.sh"
+		"create-certificate": "sh ./ssl/create.sh && sh ./ssl/sign.sh",
+		"prepare": "tsc"
 	},
 	"author": "Simon Tretter <simon.tretter@hokify.com>",
 	"preferGlobal": true,
-	"main": "dist/app.js",
+	"main": "dist/index.js",
 	"dependencies": {
 		"@hokify/node-ts-cache": "^5.6.0",
 		"haxios": "^1.1.2",

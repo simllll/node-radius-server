@@ -5,8 +5,6 @@ import * as tls from 'tls';
 import * as NodeCache from 'node-cache';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 import * as radius from 'radius';
-import debug from 'debug';
-import * as config from '../../../../../config';
 
 import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../../tls/crypt';
 import {
@@ -15,12 +13,11 @@ import {
 	IPacketHandler,
 	IPacketHandlerResult,
 	PacketResponseCode,
-} from '../../../../types/PacketHandler';
+} from '../../../../interfaces/PacketHandler';
 import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../../helpers';
-import { IEAPMethod } from '../../../../types/EAPMethod';
-import { IAuthentication } from '../../../../types/Authentication';
-
-const log = debug('radius:eap:ttls');
+import { IEAPMethod } from '../../../../interfaces/EAPMethod';
+import { IAuthentication } from '../../../../interfaces/Authentication';
+import { ILogger } from '../../../../interfaces/Logger';
 
 function tlsHasExportKeyingMaterial(tlsSocket): tlsSocket is {
 	exportKeyingMaterial: (length: number, label: string, context?: Buffer) => Buffer;
@@ -71,7 +68,14 @@ export class EAPTTLS implements IEAPMethod {
 		return this.buildEAPTTLSResponse(identifier, 21, 0x20, stateID);
 	}
 
-	constructor(private authentication: IAuthentication, private innerTunnel: IPacketHandler) {}
+	constructor(
+		private authentication: IAuthentication,
+		private tlsOptions: tls.SecureContextOptions,
+		private innerTunnel: IPacketHandler,
+		private logger: ILogger,
+		private secret: string,
+		private vlan?: number
+	) {}
 
 	private buildEAPTTLS(
 		identifier: number,
@@ -82,7 +86,7 @@ export class EAPTTLS implements IEAPMethod {
 		newResponse = true,
 		maxSize = (MAX_RADIUS_ATTRIBUTE_SIZE - 5) * 4
 	): Buffer {
-		log('maxSize', data?.length, ' > ', maxSize);
+		this.logger.debug('maxSize', data?.length, ' > ', maxSize);
 
 		/* it's the first one and we have more, therefore include length */
 		const includeLength = maxSize > 0 && data && newResponse && data.length > maxSize;
@@ -137,7 +141,7 @@ export class EAPTTLS implements IEAPMethod {
 		// set EAP length header
 		resBuffer.writeUInt16BE(resBuffer.byteLength, 2);
 
-		log('<<<<<<<<<<<< EAP RESPONSE TO CLIENT', {
+		this.logger.debug('<<<<<<<<<<<< EAP RESPONSE TO CLIENT', {
 			code: 1,
 			identifier: identifier + 1,
 			includeLength,
@@ -233,7 +237,7 @@ export class EAPTTLS implements IEAPMethod {
 		}
 		const data = msg.slice(decodedFlags.lengthIncluded ? 10 : 6).slice(0, msglength);
 
-		log('>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS', {
+		this.logger.debug('>>>>>>>>>>>> REQUEST FROM CLIENT: EAP TTLS', {
 			flags: `00000000${flags.toString(2)}`.substr(-8),
 			decodedFlags,
 			identifier,
@@ -272,7 +276,7 @@ export class EAPTTLS implements IEAPMethod {
 			attributes.push(['User-Name', packet.attributes['User-Name'].toString()]);
 		} */
 
-		if (success && config.vlan !== undefined) {
+		if (success && this.vlan !== undefined) {
 			// Tunnel-Pvt-Group-ID (81)
 			/**
 			 *  A summary of the Tunnel-Private-Group-ID Attribute format is shown
@@ -303,7 +307,7 @@ export class EAPTTLS implements IEAPMethod {
 			 *       This field must be present.  The group is represented by the
 			 *       String field.  There is no restriction on the format of group IDs.
 			 */
-			attributes.push(['Tunnel-Private-Group-Id', Buffer.from(String(config.vlan))]);
+			attributes.push(['Tunnel-Private-Group-Id', Buffer.from(String(this.vlan))]);
 			/**
 			 * https://www.rfc-editor.org/rfc/rfc2868.txt
 			 * // Tunnel-Type (64)
@@ -359,16 +363,16 @@ export class EAPTTLS implements IEAPMethod {
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[[16, encodeTunnelPW(keyingMaterial.slice(64), packet.authenticator, config.secret)]],
+				[[16, encodeTunnelPW(keyingMaterial.slice(64), packet.authenticator, this.secret)]],
 			]); //  MS-MPPE-Send-Key
 
 			attributes.push([
 				'Vendor-Specific',
 				311,
-				[[17, encodeTunnelPW(keyingMaterial.slice(0, 64), packet.authenticator, config.secret)]],
+				[[17, encodeTunnelPW(keyingMaterial.slice(0, 64), packet.authenticator, this.secret)]],
 			]); // MS-MPPE-Recv-Key
 		} else {
-			console.error(
+			this.logger.error(
 				'FATAL: no exportKeyingMaterial method available!!!, you need latest NODE JS, see https://github.com/nodejs/node/pull/31814'
 			);
 		}
@@ -386,7 +390,9 @@ export class EAPTTLS implements IEAPMethod {
 		packet: IPacket
 	): Promise<IPacketHandlerResult> {
 		if (identifier === this.lastProcessedIdentifier.get(stateID)) {
-			log(`ignoring message ${identifier}, because it's processing already... ${stateID}`);
+			this.logger.debug(
+				`ignoring message ${identifier}, because it's processing already... ${stateID}`
+			);
 
 			return {};
 		}
@@ -398,23 +404,23 @@ export class EAPTTLS implements IEAPMethod {
 			if (!data || data.length === 0) {
 				const queuedData = this.queueData.get(stateID);
 				if (queuedData instanceof Buffer && queuedData.length > 0) {
-					log(`returning queued data for ${stateID}`);
+					this.logger.debug(`returning queued data for ${stateID}`);
 					return this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, queuedData, false);
 				}
 
-				log(`empty data queue for ${stateID}`);
+				this.logger.debug(`empty data queue for ${stateID}`);
 				return {};
 			}
 
 			let connection = this.openTLSSockets.get(stateID) as ITLSServer;
 
 			if (!connection) {
-				connection = startTLSServer();
+				connection = startTLSServer(this.tlsOptions, this.logger);
 				this.openTLSSockets.set(stateID, connection);
 
 				connection.events.on('end', () => {
 					// cleanup socket
-					log('ENDING SOCKET');
+					this.logger.debug('ENDING SOCKET');
 					this.openTLSSockets.del(stateID);
 					this.lastProcessedIdentifier.del(stateID);
 				});
@@ -445,7 +451,7 @@ export class EAPTTLS implements IEAPMethod {
 					this.getEAPType()
 				);
 
-				log('inner tunnel result', result);
+				this.logger.debug('inner tunnel result', result);
 
 				if (
 					result.code === PacketResponseCode.AccessReject ||
@@ -489,7 +495,7 @@ export class EAPTTLS implements IEAPMethod {
 				while (tlsbuf.length > 5) {
 					if (tlsbuf.length < 5) {
 						// not even so much data to read a header
-						log(`Not enough data length! tlsbuf.length = ${tlsbuf.length} < 5`);
+						this.logger.debug(`Not enough data length! tlsbuf.length = ${tlsbuf.length} < 5`);
 						break;
 					}
 
@@ -510,24 +516,26 @@ export class EAPTTLS implements IEAPMethod {
 
 					// Length of data in the record (excluding the header itself).
 					const tlsLength = tlsbuf.readUInt16BE(3);
-					log(
+					this.logger.debug(
 						`TLS contentType = ${tlsContentType} version = 0x${tlsVersion.toString(
 							16
 						)} tlsLength = ${tlsLength}, tlsBufLength = ${tlsbuf.length}`
 					);
 
 					if (tlsbuf.length < tlsLength + 5) {
-						log(`Not enough data length! tlsbuf.length < ${tlsbuf.length} < ${tlsLength + 5}`);
+						this.logger.debug(
+							`Not enough data length! tlsbuf.length < ${tlsbuf.length} < ${tlsLength + 5}`
+						);
 						break;
 					}
 					sendChunk = Buffer.concat([sendChunk, tlsbuf.slice(0, tlsLength + 5)]);
 					tlsbuf = tlsbuf.slice(tlsLength + 5);
 				}
 
-				log('Maybe it is end of TLS burst.', tlsbuf.length);
-				log(`sendChunk sz=${sendChunk.length}`);
+				this.logger.debug('Maybe it is end of TLS burst.', tlsbuf.length);
+				this.logger.debug(`sendChunk sz=${sendChunk.length}`);
 
-				log('complete');
+				this.logger.debug('complete');
 
 				// send back...
 				sendResponsePromise.resolve(
@@ -537,7 +545,7 @@ export class EAPTTLS implements IEAPMethod {
 
 			const checkExistingSession = (isSessionReused) => {
 				if (isSessionReused) {
-					log('secured, session reused, accept auth!');
+					this.logger.debug('secured, session reused, accept auth!');
 					sendResponsePromise.resolve(this.authResponse(identifier, true, connection.tls, packet));
 				}
 			};
@@ -561,7 +569,7 @@ export class EAPTTLS implements IEAPMethod {
 			// send response
 			return responseData; // this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData);
 		} catch (err) {
-			console.error('decoding of EAP-TTLS package failed', msg, err);
+			this.logger.error('decoding of EAP-TTLS package failed', msg, err);
 			return {
 				code: PacketResponseCode.AccessReject,
 			};
@@ -701,7 +709,7 @@ export class EAPTTLS implements IEAPMethod {
 			flagValue += 0b01000000;
 		}
 
-		// log('flagValue', flagValue, `00000000${flagValue.toString(2)}`.substr(-8));
+		// this.logger.debug('flagValue', flagValue, `00000000${flagValue.toString(2)}`.substr(-8));
 
 		AVP.writeInt8(flagValue, 4); // flags (set V..)
 
