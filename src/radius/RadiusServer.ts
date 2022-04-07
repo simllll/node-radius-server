@@ -1,22 +1,30 @@
 import * as radius from 'radius';
 import { EventEmitter } from 'events';
-import { IPacketHandlerResult, PacketResponseCode } from '../interfaces/PacketHandler';
+import { IPacketHandlerResult, PacketResponseCode } from '../interfaces/PacketHandler.js';
 
-import { PacketHandler } from './PacketHandler';
-import { UDPServer } from '../server/UDPServer';
-import { startTLSServer } from '../tls/crypt';
-import { IRadiusServerOptions } from '../interfaces/RadiusServerOptions';
-import { ConsoleLogger, LogLevel } from '../logger/ConsoleLogger';
+import { PacketHandler } from './PacketHandler.js';
+import { UDPServer } from '../server/UDPServer.js';
+import { startTLSServer } from '../tls/crypt.js';
+import { RadiusServerOptions } from '../interfaces/RadiusServerOptions.js';
+import { ConsoleLogger, LogLevel } from '../logger/ConsoleLogger.js';
+
+function hasLogger(options): options is { logger: ConsoleLogger } {
+	return !!options.logger;
+}
+
+function hasLogLevel(options): options is { logLevel?: LogLevel } {
+	return options.logLevel !== undefined;
+}
 
 export class RadiusServer extends UDPServer {
 	private packetHandler: PacketHandler;
 
-	constructor(private options: IRadiusServerOptions) {
+	constructor(private options: RadiusServerOptions) {
 		super(
 			options.port || 1812,
 			options.address || '0.0.0.0',
-			options.logger ||
-				new ConsoleLogger(process.env.NODE_ENV === 'development' ? LogLevel.debug : LogLevel.log)
+			(hasLogger(options) && options.logger) ||
+				new ConsoleLogger((hasLogLevel(options) && options.logLevel) || LogLevel.Log)
 		);
 		this.packetHandler = new PacketHandler(
 			options.authentication,

@@ -1,4 +1,4 @@
-import { ClientOptions, createClient } from 'ldapjs';
+import ldapjs, { ClientOptions } from 'ldapjs';
 import * as tls from 'tls';
 import * as fs from 'fs';
 import { IAuthentication } from '../interfaces/Authentication';
@@ -62,7 +62,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 		const dns: { [key: string]: string } = {};
 
 		await new Promise<void>((resolve, reject) => {
-			const ldapDNClient = createClient(this.config).on('error', (error) => {
+			const ldapDNClient = ldapjs.createClient(this.config).on('error', (error) => {
 				this.logger.error('Error in ldap', error);
 				reject(error);
 			});
@@ -96,6 +96,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 					});
 
 					res.on('end', (result) => {
+						console.log('this', this);
 						this.logger.debug(`ldap status: ${result?.status}`);
 
 						// replace with new dns
@@ -149,7 +150,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 
 		const authResult: boolean = await new Promise((resolve, reject) => {
 			// we never unbding a client, therefore create a new client every time
-			const authClient = createClient(this.config);
+			const authClient = ldapjs.createClient(this.config);
 
 			authClient.bind(dn, password, (err, res) => {
 				if (err) {

@@ -1,13 +1,13 @@
 import * as tls from 'tls';
 
-import { IPacket, IPacketHandler, IPacketHandlerResult } from '../interfaces/PacketHandler';
-import { IAuthentication } from '../interfaces/Authentication';
-import { EAPPacketHandler } from './handler/EAPPacketHandler';
-import { EAPTTLS } from './handler/eap/eapMethods/EAP-TTLS';
-import { EAPGTC } from './handler/eap/eapMethods/EAP-GTC';
-import { EAPMD5 } from './handler/eap/eapMethods/EAP-MD5';
-import { UserPasswordPacketHandler } from './handler/UserPasswordPacketHandler';
-import { ILogger } from '../interfaces/Logger';
+import { IPacket, IPacketHandler, IPacketHandlerResult } from '../interfaces/PacketHandler.js';
+import { IAuthentication } from '../interfaces/Authentication.js';
+import { EAPPacketHandler } from './handler/EAPPacketHandler.js';
+import { EAPTTLS } from './handler/eap/eapMethods/EAP-TTLS.js';
+import { EAPGTC } from './handler/eap/eapMethods/EAP-GTC.js';
+import { EAPMD5 } from './handler/eap/eapMethods/EAP-MD5.js';
+import { UserPasswordPacketHandler } from './handler/UserPasswordPacketHandler.js';
+import { ILogger } from '../interfaces/Logger.js';
 
 export class PacketHandler implements IPacketHandler {
 	packetHandlers: IPacketHandler[] = [];

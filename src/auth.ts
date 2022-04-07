@@ -1,4 +1,4 @@
-import * as NodeCache from 'node-cache';
+import NodeCache from 'node-cache';
 import { Cache, ExpirationStrategy, MemoryStorage } from '@hokify/node-ts-cache';
 import { IAuthentication } from './interfaces/Authentication';
 import { ILogger } from './interfaces/Logger';

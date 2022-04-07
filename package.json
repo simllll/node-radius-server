@@ -17,7 +17,7 @@
 	"homepage": "https://github.com/simllll/node-radius-server",
 	"scripts": {
 		"release": "npm run build && standard-version",
-		"debug": "DEBUG=radius:* node --tls-min-v1.0 dist/app.js",
+		"debug": "DEBUG=verbose node --tls-min-v1.0 dist/app.js",
 		"start": "node --tls-min-v1.0 dist/app.js",
 		"build": "tsc",
 		"dev": "ts-node src/app.ts",
@@ -30,15 +30,15 @@
 	"author": "Simon Tretter <simon.tretter@hokify.com>",
 	"preferGlobal": true,
 	"main": "dist/index.js",
+	"type": "module",
 	"dependencies": {
 		"@hokify/node-ts-cache": "^5.6.0",
-		"haxios": "^1.1.2",
-		"debug": "^4.3.2",
 		"imap-simple": "^5.1.0",
 		"ldapauth-fork": "^5.0.1",
 		"ldapjs": "^2.3.1",
 		"native-duplexpair": "^1.0.0",
 		"node-cache": "^5.1.2",
+		"node-fetch": "^3.2.3",
 		"radius": "~1.1.4",
 		"smtp-client": "^0.4.0",
 		"yargs": "~17.2.1"

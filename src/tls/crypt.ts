@@ -2,9 +2,9 @@ import * as events from 'events';
 import * as tls from 'tls';
 import { createSecureContext } from 'tls';
 import * as crypto from 'crypto';
-import * as DuplexPair from 'native-duplexpair';
-import * as NodeCache from 'node-cache';
-import { ILogger } from '../interfaces/Logger';
+import DuplexPair from 'native-duplexpair';
+import NodeCache from 'node-cache';
+import { ILogger } from '../interfaces/Logger.js';
 // import * as constants from 'constants';
 
 export interface ITLSServer {

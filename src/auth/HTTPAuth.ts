@@ -1,4 +1,4 @@
-import haxios from 'haxios';
+import fetch from 'node-fetch';
 import { IAuthentication } from '../interfaces/Authentication';
 import { ILogger } from '../interfaces/Logger';
 
@@ -14,18 +14,14 @@ export class HTTPAuth implements IAuthentication {
 	}
 
 	async authenticate(username: string, password: string) {
-		const result = await haxios.post(
-			this.url,
-			{
+		const result = await fetch(this.url, {
+			method: 'post',
+			body: JSON.stringify({
 				username,
 				password,
-			},
-			{
-				validateStatus(status) {
-					return status >= 200 && status < 500;
-				},
-			}
-		);
+			}),
+			headers: { 'Content-Type': 'application/json' },
+		});
 
 		if (result.status === 200) {
 			return true;

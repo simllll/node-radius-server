@@ -1,10 +1,14 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const fs = require('fs');
-const path = require('path');
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const SSL_CERT_DIRECTORY = path.join(__dirname, './ssl/cert');
 
-module.exports = {
+export default {
 	port: 1812,
 	// radius secret
 	secret: 'testing123',
@@ -43,19 +47,25 @@ module.exports = {
 			certFile: 'ldap.gsuite.crt'
 		},
 		tlsOptions: {
-			servername: 'ldap.google.com'
-		}
-	}
-	*/
+			rejectUnauthorized: false,
+			requestCert: false,
+		},
+	}, 
+	 */
 
-	/** IMAP AUTH 
-	authentication: 'IMAPAuth',
+	/** static auth 
+	authentication: 'StaticAuth',
 	authenticationOptions: {
-		host: 'imap.gmail.com',
-		port: 993,
-		useSecureTransport: true,
-		validHosts: ['hokify.com']
-	}
+		validCredentials: [
+			{ username: 'test@hokify.com', password: 'test' },
+			{ username: 'user1@asdf.com', password: 'password' },
+			{ username: 'admin@hallo.com', password: 'cool' },
+		],
+	},
+	 */
+
+	/** VLAN CONFIG
+	vlan: 400,
 	 */
 
 	/** SMTP AUTH 
@@ -67,7 +77,7 @@ module.exports = {
 		validHosts: ['gmail.com']
 	}
 	 */
-	 
+
 	/** HTTP AUTH 
 	authentication: 'HTTPAuth',
 	authenticationOptions: {
