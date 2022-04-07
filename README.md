@@ -69,6 +69,23 @@ Ensure you have installed latest node version (>= 13.10.1) and run:
 
     npm run start
 
+# Use as module
+
+This allows this module to be used in other node projects:
+```ts
+  import { RadiusServer } from 'radius-server';
+
+  const radiusServer = new RadiusServer({
+      logger: this.logger,
+      secret: this.secret,
+      port: this.port,
+      address: this.hostname,
+      tlsOptions: this.tlsOptions,
+      authentication: this
+  });
+  await radiusServer.start();
+ ```
+
 ## Known Issues / Disclaimer
 
 Support for this has landed in node 13.10.1, therefore ensure you have installed at least this node version.
