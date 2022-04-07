@@ -6,7 +6,7 @@
 		"node": ">13.10.1"
 	},
 	"bin": {
-		"radius-server": "bin/radius-server"
+		"radius-server": "bin/radius-server.js"
 	},
 	"files": [
 		"bin",
