@@ -17,7 +17,7 @@
 	"homepage": "https://github.com/simllll/node-radius-server",
 	"scripts": {
 		"release": "npm run build && standard-version",
-		"debug": "node --tls-min-v1.0 dist/app.js",
+		"debug": "DEBUG=verbose node --tls-min-v1.0 dist/app.js",
 		"start": "node --tls-min-v1.0 dist/app.js",
 		"build": "tsc",
 		"dev": "ts-node src/app.ts",

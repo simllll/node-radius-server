@@ -7,13 +7,27 @@ import { IAuthentication } from './interfaces/Authentication.js';
 import { RadiusServer } from './radius/RadiusServer.js';
 import { ConsoleLogger, LogLevel } from './logger/ConsoleLogger.js';
 
+function isValidLogLevel(debug?: string): debug is LogLevel | undefined {
+	switch (debug) {
+		case LogLevel.Verbose:
+		case LogLevel.Log:
+		case LogLevel.Error:
+		case LogLevel.Warn:
+		case LogLevel.Debug:
+		case undefined:
+			return true;
+		default:
+			throw new Error(`invalid debug level: ${debug}`);
+	}
+}
 
 (async () => {
 	// kinda ugly workaround for yargs
-	const myYargs = await yargs() as unknown as typeof yargs;
+	const myYargs = (await yargs()) as unknown as typeof yargs;
 
 	const logger = new ConsoleLogger(
-		process.env.NODE_ENV === 'development' ? LogLevel.debug : LogLevel.log
+		(isValidLogLevel(process.env.DEBUG) && process.env.DEBUG) ||
+			(process.env.NODE_ENV === 'development' ? LogLevel.Debug : LogLevel.Log)
 	);
 
 	const { argv } = myYargs
@@ -41,7 +55,9 @@ import { ConsoleLogger, LogLevel } from './logger/ConsoleLogger.js';
 	// configure auth mechanism
 	let auth: IAuthentication;
 	try {
-		const AuthMechanism = (await import(`./auth/${config.authentication}.js`))[config.authentication];
+		const AuthMechanism = (await import(`./auth/${config.authentication}.js`))[
+			config.authentication
+		];
 		auth = new AuthMechanism(config.authenticationOptions, logger);
 	} catch (err) {
 		logger.error('cannot load auth mechanisms', config.authentication);
