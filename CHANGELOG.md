@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.1](https://github.com/simllll/node-radius-server/compare/v2.1.0...v2.1.1) (2022-04-07)
+
+
+### Bug Fixes
+
+* binary run ([35f0d98](https://github.com/simllll/node-radius-server/commit/35f0d98bc9cc6e15543f491495123f2c0268cf8c))
+
 ## [2.1.0](https://github.com/simllll/node-radius-server/compare/v1.2.1...v2.1.0) (2022-04-07)
 
 
