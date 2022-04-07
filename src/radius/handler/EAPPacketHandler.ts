@@ -1,11 +1,11 @@
 // https://tools.ietf.org/html/rfc3748#section-4.1
 
-import * as NodeCache from 'node-cache';
-import { makeid } from '../../helpers';
-import { IPacket, IPacketHandler, IPacketHandlerResult } from '../../interfaces/PacketHandler';
-import { IEAPMethod } from '../../interfaces/EAPMethod';
-import { buildEAPResponse, decodeEAPHeader } from './eap/EAPHelper';
-import { ILogger } from '../../interfaces/Logger';
+import NodeCache from 'node-cache';
+import { makeid } from '../../helpers.js';
+import { IPacket, IPacketHandler, IPacketHandlerResult } from '../../interfaces/PacketHandler.js';
+import { IEAPMethod } from '../../interfaces/EAPMethod.js';
+import { buildEAPResponse, decodeEAPHeader } from './eap/EAPHelper.js';
+import { ILogger } from '../../interfaces/Logger.js';
 
 export class EAPPacketHandler implements IPacketHandler {
 	private identities = new NodeCache({ useClones: false, stdTTL: 60 }); // queue data maximum for 60 seconds

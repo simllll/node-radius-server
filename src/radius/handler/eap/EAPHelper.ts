@@ -1,4 +1,4 @@
-import { IPacketHandlerResult, PacketResponseCode } from '../../../interfaces/PacketHandler';
+import { IPacketHandlerResult, PacketResponseCode } from '../../../interfaces/PacketHandler.js';
 
 export function buildEAP(identifier: number, msgType: number, data?: Buffer) {
 	/** build a package according to this:

@@ -1,12 +1,12 @@
 import * as radius from 'radius';
 import { EventEmitter } from 'events';
-import { IPacketHandlerResult, PacketResponseCode } from '../interfaces/PacketHandler';
+import { IPacketHandlerResult, PacketResponseCode } from '../interfaces/PacketHandler.js';
 
-import { PacketHandler } from './PacketHandler';
-import { UDPServer } from '../server/UDPServer';
-import { startTLSServer } from '../tls/crypt';
-import { IRadiusServerOptions } from '../interfaces/RadiusServerOptions';
-import { ConsoleLogger, LogLevel } from '../logger/ConsoleLogger';
+import { PacketHandler } from './PacketHandler.js';
+import { UDPServer } from '../server/UDPServer.js';
+import { startTLSServer } from '../tls/crypt.js';
+import { IRadiusServerOptions } from '../interfaces/RadiusServerOptions.js';
+import { ConsoleLogger, LogLevel } from '../logger/ConsoleLogger.js';
 
 export class RadiusServer extends UDPServer {
 	private packetHandler: PacketHandler;

@@ -2,9 +2,9 @@ import * as dgram from 'dgram';
 import { SocketType } from 'dgram';
 import * as events from 'events';
 import { EventEmitter } from 'events';
-import { newDeferredPromise } from '../helpers';
-import { IServer } from '../interfaces/Server';
-import { ILogger } from '../interfaces/Logger';
+import { newDeferredPromise } from '../helpers.js';
+import type { IServer } from '../interfaces/Server.js';
+import type { ILogger } from '../interfaces/Logger.js';
 
 export class UDPServer extends events.EventEmitter implements IServer {
 	static MAX_RETRIES = 3;
