@@ -2,4 +2,4 @@
 
 'use strict';
 
-require('../dist/app.js');
+await import('../dist/app.js');
