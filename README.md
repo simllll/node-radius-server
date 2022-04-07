@@ -71,6 +71,10 @@ Ensure you have installed latest node version (>= 13.10.1) and run:
 
 # Use as module
 
+```
+npm install radius-server
+```
+
 This allows this module to be used in other node projects:
 ```ts
   import { RadiusServer } from 'radius-server';
