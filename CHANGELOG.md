@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/simllll/node-radius-server/compare/v1.2.1...v2.0.0) (2022-04-07)
+
+Breaking Change: **This is now an ESM module!**
+### Features
+
+* allow setting vlan for authenticated users ([7022750](https://github.com/simllll/node-radius-server/commit/7022750c9831f72b797c7d528fd0300fe4023045))
+* restructure to allow usage in other mode projects ([#269](https://github.com/simllll/node-radius-server/issues/269)) ([341e9d2](https://github.com/simllll/node-radius-server/commit/341e9d2aea7ab2838c7e3af2e8e4b7d9918bf1f3))
+
+
+### Bug Fixes
+
+* cleaner output ([9dc8771](https://github.com/simllll/node-radius-server/commit/9dc8771a21963a138e9f8b706b7554bc13c12955))
+* skip username on auth response ([7450673](https://github.com/simllll/node-radius-server/commit/74506735eaa52bc1840eea3f9aa1dd30cb718352))
+
 ### [1.2.1](https://github.com/simllll/node-radius-server/compare/v1.2.0...v1.2.1) (2021-10-29)
 
 
