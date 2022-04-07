@@ -32,7 +32,7 @@
 	"main": "dist/index.js",
 	"type": "module",
 	"dependencies": {
-		"@hokify/node-ts-cache": "^5.6.0",
+		"@hokify/node-ts-cache": "^6.0.0",
 		"imap-simple": "^5.1.0",
 		"ldapauth-fork": "^5.0.1",
 		"ldapjs": "^2.3.1",
