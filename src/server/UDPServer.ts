@@ -1,17 +1,15 @@
-import * as dgram from 'dgram';
-import { SocketType } from 'dgram';
-import * as events from 'events';
+import dgram, { Socket, SocketType } from 'dgram';
 import { EventEmitter } from 'events';
-import { newDeferredPromise } from '../helpers.js';
-import type { IServer } from '../interfaces/Server.js';
-import type { ILogger } from '../interfaces/Logger.js';
+import { newDeferredPromise } from '../helpers';
+import type { IServer } from '../interfaces/Server';
+import type { ILogger } from '../interfaces/Logger';
 
-export class UDPServer extends events.EventEmitter implements IServer {
+export class UDPServer extends EventEmitter implements IServer {
 	static MAX_RETRIES = 3;
 
 	private timeout: { [key: string]: NodeJS.Timeout } = {};
 
-	private server: dgram.Socket;
+	private server: Socket;
 
 	constructor(
 		private port: number,

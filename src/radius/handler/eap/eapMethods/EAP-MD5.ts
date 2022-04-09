@@ -2,10 +2,10 @@
 // https://tools.ietf.org/html/draft-funk-eap-ttls-v1-00 TTLS v1 (not implemented)
 /* eslint-disable no-bitwise */
 import { RadiusPacket } from 'radius';
-import { IPacketHandlerResult } from '../../../../interfaces/PacketHandler.js';
-import { IEAPMethod } from '../../../../interfaces/EAPMethod.js';
-import { IAuthentication } from '../../../../interfaces/Authentication.js';
-import { ILogger } from '../../../../interfaces/Logger.js';
+import { IPacketHandlerResult } from '../../../../interfaces/PacketHandler';
+import { IEAPMethod } from '../../../../interfaces/EAPMethod';
+import { IAuthentication } from '../../../../interfaces/Authentication';
+import { ILogger } from '../../../../interfaces/Logger';
 
 export class EAPMD5 implements IEAPMethod {
 	getEAPType(): number {

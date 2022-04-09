@@ -1,6 +1,6 @@
 import ldapjs, { ClientOptions } from 'ldapjs';
-import * as tls from 'tls';
-import * as fs from 'fs';
+import tls from 'tls';
+import fs from 'fs';
 import { IAuthentication } from '../interfaces/Authentication';
 import { ILogger } from '../interfaces/Logger';
 

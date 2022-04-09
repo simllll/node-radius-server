@@ -1,14 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const fs = require('fs');
+const path = require('path');
 
 const SSL_CERT_DIRECTORY = path.join(__dirname, './ssl/cert');
 
-export default {
+module.exports = {
 	port: 1812,
 	// radius secret
 	secret: 'testing123',
@@ -37,7 +33,7 @@ export default {
 		},
 	},
 
-	/** LDAP AUTH 
+	/** LDAP AUTH
 	authentication: 'LDAPAuth',
 	authenticationOptions: {
 		url: 'ldaps://ldap.google.com',
@@ -50,10 +46,10 @@ export default {
 			rejectUnauthorized: false,
 			requestCert: false,
 		},
-	}, 
+	},
 	 */
 
-	/** static auth 
+	/** static auth
 	authentication: 'StaticAuth',
 	authenticationOptions: {
 		validCredentials: [
@@ -68,7 +64,7 @@ export default {
 	vlan: 400,
 	 */
 
-	/** SMTP AUTH 
+	/** SMTP AUTH
 	authentication: 'IMAPAuth',
 	authenticationOptions: {
 		host: 'smtp.gmail.com',
@@ -78,7 +74,7 @@ export default {
 	}
 	 */
 
-	/** HTTP AUTH 
+	/** HTTP AUTH
 	authentication: 'HTTPAuth',
 	authenticationOptions: {
 		url: 'https://my-website.com/api/backend-login'

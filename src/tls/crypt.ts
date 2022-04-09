@@ -1,11 +1,10 @@
-import * as events from 'events';
-import * as tls from 'tls';
-import { createSecureContext } from 'tls';
-import * as crypto from 'crypto';
+import events from 'events';
+import tls, { createSecureContext } from 'tls';
+import crypto from 'crypto';
 import DuplexPair from 'native-duplexpair';
 import NodeCache from 'node-cache';
-import { ILogger } from '../interfaces/Logger.js';
-// import * as constants from 'constants';
+import { ILogger } from '../interfaces/Logger';
+// import constants from 'constants';
 
 export interface ITLSServer {
 	events: events.EventEmitter;
@@ -176,7 +175,7 @@ export function encodeTunnelPW(key: Buffer, authenticator: Buffer, secret: strin
    Intermediate values b(1), b(2)...c(i) are required.  Encryption
    is performed in the following manner ('+' indicates
    concatenation):
-   
+
       Zorn                         Informational                     [Page 21]
 
    RFC 2548      Microsoft Vendor-specific RADIUS Attributes     March 1999

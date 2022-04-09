@@ -1,5 +1,5 @@
-import * as LdapAuth from 'ldapauth-fork';
-import * as fs from 'fs';
+import LdapAuth from 'ldapauth-fork';
+import fs from 'fs';
 import { IAuthentication } from '../interfaces/Authentication';
 import { ILogger } from '../interfaces/Logger';
 

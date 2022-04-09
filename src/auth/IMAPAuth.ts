@@ -1,4 +1,4 @@
-import * as imaps from 'imap-simple';
+import imaps from 'imap-simple';
 import { IAuthentication } from '../interfaces/Authentication';
 import { ILogger } from '../interfaces/Logger';
 

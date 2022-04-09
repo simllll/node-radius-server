@@ -1,11 +1,12 @@
 import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
 // eslint-disable-next-line import/extensions
-import config from '../config.js';
-import { Authentication } from './auth.js';
-import { IAuthentication } from './interfaces/Authentication.js';
-import { RadiusServer } from './radius/RadiusServer.js';
-import { ConsoleLogger, LogLevel } from './logger/ConsoleLogger.js';
+import config from '../config';
+import { Authentication } from './auth';
+import { IAuthentication } from './interfaces/Authentication';
+import { RadiusServer } from './radius/RadiusServer';
+import { ConsoleLogger, LogLevel } from './logger/ConsoleLogger';
 
 function isValidLogLevel(debug?: string): debug is LogLevel | undefined {
 	switch (debug) {
@@ -22,15 +23,12 @@ function isValidLogLevel(debug?: string): debug is LogLevel | undefined {
 }
 
 (async () => {
-	// kinda ugly workaround for yargs
-	const myYargs = (await yargs()) as unknown as typeof yargs;
-
 	const logger = new ConsoleLogger(
 		(isValidLogLevel(process.env.DEBUG) && process.env.DEBUG) ||
 			(process.env.NODE_ENV === 'development' ? LogLevel.Debug : LogLevel.Log)
 	);
 
-	const { argv } = myYargs
+	const { argv } = yargs(hideBin(process.argv))
 		.usage('NODE RADIUS Server\nUsage: radius-server')
 		.example('radius-server --port 1812 -s radiussecret', 'start on port 1812 with a secret')
 		.default({
@@ -55,9 +53,7 @@ function isValidLogLevel(debug?: string): debug is LogLevel | undefined {
 	// configure auth mechanism
 	let auth: IAuthentication;
 	try {
-		const AuthMechanism = (await import(`./auth/${config.authentication}.js`))[
-			config.authentication
-		];
+		const AuthMechanism = (await import(`./auth/${config.authentication}`))[config.authentication];
 		auth = new AuthMechanism(config.authenticationOptions, logger);
 	} catch (err) {
 		logger.error('cannot load auth mechanisms', config.authentication);

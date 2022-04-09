@@ -30,15 +30,14 @@
 	"author": "Simon Tretter <simon.tretter@hokify.com>",
 	"preferGlobal": true,
 	"main": "dist/index.js",
-	"type": "module",
 	"dependencies": {
-		"@hokify/node-ts-cache": "^6.0.0",
+		"@hokify/node-ts-cache": "^5.6.0",
 		"imap-simple": "^5.1.0",
 		"ldapauth-fork": "^5.0.2",
 		"ldapjs": "^2.3.2",
 		"native-duplexpair": "^1.0.0",
 		"node-cache": "^5.1.2",
-		"node-fetch": "^3.2.3",
+		"node-fetch": "^2.6.7",
 		"radius": "~1.1.4",
 		"smtp-client": "^0.4.0",
 		"yargs": "~17.4.0"

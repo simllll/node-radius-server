@@ -1,11 +1,11 @@
 // https://tools.ietf.org/html/rfc5281 TTLS v0
 // https://tools.ietf.org/html/draft-funk-eap-ttls-v1-00 TTLS v1 (not implemented)
 /* eslint-disable no-bitwise */
-import { IPacketHandlerResult, PacketResponseCode } from '../../../../interfaces/PacketHandler.js';
-import { IEAPMethod } from '../../../../interfaces/EAPMethod.js';
-import { IAuthentication } from '../../../../interfaces/Authentication.js';
-import { buildEAPResponse, decodeEAPHeader } from '../EAPHelper.js';
-import { ILogger } from '../../../../interfaces/Logger.js';
+import { IPacketHandlerResult, PacketResponseCode } from '../../../../interfaces/PacketHandler';
+import { IEAPMethod } from '../../../../interfaces/EAPMethod';
+import { IAuthentication } from '../../../../interfaces/Authentication';
+import { buildEAPResponse, decodeEAPHeader } from '../EAPHelper';
+import { ILogger } from '../../../../interfaces/Logger';
 
 export class EAPGTC implements IEAPMethod {
 	getEAPType(): number {

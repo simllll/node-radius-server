@@ -1,11 +1,11 @@
-import { IAuthentication } from '../../interfaces/Authentication.js';
+import { IAuthentication } from '../../interfaces/Authentication';
 import {
 	IPacket,
 	IPacketHandler,
 	IPacketHandlerResult,
 	PacketResponseCode,
-} from '../../interfaces/PacketHandler.js';
-import { ILogger } from '../../interfaces/Logger.js';
+} from '../../interfaces/PacketHandler';
+import { ILogger } from '../../interfaces/Logger';
 
 export class UserPasswordPacketHandler implements IPacketHandler {
 	constructor(private authentication: IAuthentication, private logger: ILogger) {}

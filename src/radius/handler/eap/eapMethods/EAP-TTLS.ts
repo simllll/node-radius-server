@@ -1,23 +1,23 @@
 // https://tools.ietf.org/html/rfc5281 TTLS v0
 // https://tools.ietf.org/html/draft-funk-eap-ttls-v1-00 TTLS v1 (not implemented)
 /* eslint-disable no-bitwise */
-import * as tls from 'tls';
+import tls from 'tls';
 import NodeCache from 'node-cache';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-import * as radius from 'radius';
+import radius from 'radius';
 
-import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../../tls/crypt.js';
+import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../../tls/crypt';
 import {
 	IPacket,
 	IPacketAttributes,
 	IPacketHandler,
 	IPacketHandlerResult,
 	PacketResponseCode,
-} from '../../../../interfaces/PacketHandler.js';
-import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../../helpers.js';
-import { IEAPMethod } from '../../../../interfaces/EAPMethod.js';
-import { IAuthentication } from '../../../../interfaces/Authentication.js';
-import { ILogger } from '../../../../interfaces/Logger.js';
+} from '../../../../interfaces/PacketHandler';
+import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../../helpers';
+import { IEAPMethod } from '../../../../interfaces/EAPMethod';
+import { IAuthentication } from '../../../../interfaces/Authentication';
+import { ILogger } from '../../../../interfaces/Logger';
 
 function tlsHasExportKeyingMaterial(tlsSocket): tlsSocket is {
 	exportKeyingMaterial: (length: number, label: string, context?: Buffer) => Buffer;

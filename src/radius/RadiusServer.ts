@@ -1,12 +1,12 @@
-import * as radius from 'radius';
+import radius from 'radius';
 import { EventEmitter } from 'events';
-import { IPacketHandlerResult, PacketResponseCode } from '../interfaces/PacketHandler.js';
+import { IPacketHandlerResult, PacketResponseCode } from '../interfaces/PacketHandler';
 
-import { PacketHandler } from './PacketHandler.js';
-import { UDPServer } from '../server/UDPServer.js';
-import { startTLSServer } from '../tls/crypt.js';
-import { RadiusServerOptions } from '../interfaces/RadiusServerOptions.js';
-import { ConsoleLogger, LogLevel } from '../logger/ConsoleLogger.js';
+import { PacketHandler } from './PacketHandler';
+import { UDPServer } from '../server/UDPServer';
+import { startTLSServer } from '../tls/crypt';
+import { RadiusServerOptions } from '../interfaces/RadiusServerOptions';
+import { ConsoleLogger, LogLevel } from '../logger/ConsoleLogger';
 
 function hasLogger(options): options is { logger: ConsoleLogger } {
 	return !!options.logger;

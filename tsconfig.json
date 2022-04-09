@@ -4,7 +4,7 @@
 		"rootDir": "./src",
 
 		// target settings for node js
-		"module": "ES2020",
+		"module": "CommonJS",
 		"target": "ES2021",
 		"lib": ["ES2021", "dom"],
 
@@ -23,6 +23,7 @@
 		"resolveJsonModule": true,
 		"sourceMap": true,
 		"isolatedModules": false,
+		"esModuleInterop": true,
 		"declaration": true
 	},
 	"exclude": ["node_modules", "**/__tests__"],
