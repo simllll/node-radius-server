@@ -24,7 +24,8 @@
 		"sourceMap": true,
 		"isolatedModules": false,
 		"esModuleInterop": true,
-		"declaration": true
+		"declaration": true,
+		"skipLibCheck": true,
 	},
 	"exclude": ["node_modules", "**/__tests__"],
 	"include": ["./src"]
