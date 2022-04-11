@@ -1,4 +1,4 @@
-import { ILogger } from '../interfaces/Logger';
+import { ILogger } from '../interfaces/Logger.js';
 
 export enum LogLevel {
 	Verbose = 'verbose',

@@ -1,8 +1,8 @@
 import ldapjs, { ClientOptions } from 'ldapjs';
 import * as tls from 'tls';
 import * as fs from 'fs';
-import { IAuthentication } from '../interfaces/Authentication';
-import { ILogger } from '../interfaces/Logger';
+import { IAuthentication } from '../interfaces/Authentication.js';
+import { ILogger } from '../interfaces/Logger.js';
 
 const usernameFields = ['posixUid', 'mail'];
 

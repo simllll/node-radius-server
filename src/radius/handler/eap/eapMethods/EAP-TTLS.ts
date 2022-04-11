@@ -15,7 +15,7 @@ import {
 	PacketResponseCode,
 } from '../../../../interfaces/PacketHandler.js';
 import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../../helpers.js';
-import { IEAPMethod } from '../../../../interfaces/EAPMethod.js';
+import { EAPMessageType, IEAPMethod } from '../../../../interfaces/EAPMethod.js';
 import { IAuthentication } from '../../../../interfaces/Authentication.js';
 import { ILogger } from '../../../../interfaces/Logger.js';
 
@@ -46,7 +46,7 @@ export class EAPTTLS implements IEAPMethod {
 	private openTLSSockets = new NodeCache({ useClones: false, stdTTL: 3600 }); // keep sockets for about one hour
 
 	getEAPType(): number {
-		return 21;
+		return EAPMessageType.TTLS;
 	}
 
 	identify(identifier: number, stateID: string): IPacketHandlerResult {
@@ -79,7 +79,7 @@ export class EAPTTLS implements IEAPMethod {
 
 	private buildEAPTTLS(
 		identifier: number,
-		msgType = 21,
+		msgType = EAPMessageType.TTLS,
 		msgFlags = 0x00,
 		stateID: string,
 		data?: Buffer,
@@ -163,7 +163,7 @@ export class EAPTTLS implements IEAPMethod {
 
 	private buildEAPTTLSResponse(
 		identifier: number,
-		msgType = 21,
+		msgType = EAPMessageType.TTLS,
 		msgFlags = 0x00,
 		stateID: string,
 		data?: Buffer,

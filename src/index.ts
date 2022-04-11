@@ -1,6 +1,6 @@
-import { IAuthentication } from './interfaces/Authentication';
-import { RadiusServerOptions } from './interfaces/RadiusServerOptions';
-import { RadiusServer } from './radius/RadiusServer';
+import { IAuthentication } from './interfaces/Authentication.js';
+import { RadiusServerOptions } from './interfaces/RadiusServerOptions.js';
+import { RadiusServer } from './radius/RadiusServer.js';
 
 export { IAuthentication as RadiusAuthentication, RadiusServerOptions, RadiusServer };
 

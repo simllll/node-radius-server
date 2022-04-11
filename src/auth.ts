@@ -1,7 +1,7 @@
 import NodeCache from 'node-cache';
 import { Cache, ExpirationStrategy, MemoryStorage } from '@hokify/node-ts-cache';
-import { IAuthentication } from './interfaces/Authentication';
-import { ILogger } from './interfaces/Logger';
+import { IAuthentication } from './interfaces/Authentication.js';
+import { ILogger } from './interfaces/Logger.js';
 
 const cacheStrategy = new ExpirationStrategy(new MemoryStorage());
 /**
