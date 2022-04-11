@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.2](https://github.com/simllll/node-radius-server/compare/v2.1.1...v2.1.2) (2022-04-11)
+
+
+### Bug Fixes
+
+* esm export fix and add test for import ([#281](https://github.com/simllll/node-radius-server/issues/281)) ([1226dcd](https://github.com/simllll/node-radius-server/commit/1226dcdb4e7b5f3e6a46c80df2c20cb5f6edd470))
+
 ### [2.1.1](https://github.com/simllll/node-radius-server/compare/v2.1.0...v2.1.1) (2022-04-07)
 
 
