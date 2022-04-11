@@ -1,6 +1,7 @@
 import { IPacketHandlerResult, PacketResponseCode } from '../../../interfaces/PacketHandler.js';
+import { EAPMessageType } from '../../../interfaces/EAPMethod.js';
 
-export function buildEAP(identifier: number, msgType: number, data?: Buffer) {
+export function buildEAP(identifier: number, msgType: EAPMessageType, data?: Buffer) {
 	/** build a package according to this:
 			0                   1                   2                   3
 			0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1

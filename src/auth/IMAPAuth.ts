@@ -1,6 +1,6 @@
 import * as imaps from 'imap-simple';
-import { IAuthentication } from '../interfaces/Authentication';
-import { ILogger } from '../interfaces/Logger';
+import { IAuthentication } from '../interfaces/Authentication.js';
+import { ILogger } from '../interfaces/Logger.js';
 
 interface IIMAPAuthOptions {
 	host: string;

@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
-import { IAuthentication } from '../interfaces/Authentication';
-import { ILogger } from '../interfaces/Logger';
+import { IAuthentication } from '../interfaces/Authentication.js';
+import { ILogger } from '../interfaces/Logger.js';
 
 interface IHTTPAuthOptions {
 	url: string;
