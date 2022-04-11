@@ -1,3 +1,4 @@
+import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs';
 
 // eslint-disable-next-line import/extensions
@@ -22,15 +23,12 @@ function isValidLogLevel(debug?: string): debug is LogLevel | undefined {
 }
 
 (async () => {
-	// kinda ugly workaround for yargs
-	const myYargs = (await yargs()) as unknown as typeof yargs;
-
 	const logger = new ConsoleLogger(
 		(isValidLogLevel(process.env.DEBUG) && process.env.DEBUG) ||
 			(process.env.NODE_ENV === 'development' ? LogLevel.Debug : LogLevel.Log)
 	);
 
-	const { argv } = myYargs
+	const { argv } = yargs(hideBin(process.argv))
 		.usage('NODE RADIUS Server\nUsage: radius-server')
 		.example('radius-server --port 1812 -s radiussecret', 'start on port 1812 with a secret')
 		.default({
