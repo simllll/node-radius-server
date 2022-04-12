@@ -98,7 +98,6 @@ export class GoogleLDAPAuth implements IAuthentication {
 						});
 
 						res.on('end', (result) => {
-							console.log('this', this);
 							this.logger.debug(`ldap status: ${result?.status}`);
 
 							// this.logger.debug('allValidDNsCache', this.allValidDNsCache);

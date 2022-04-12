@@ -24,8 +24,10 @@ function isValidLogLevel(debug?: string): debug is LogLevel | undefined {
 
 (async () => {
 	const logger = new ConsoleLogger(
-		(isValidLogLevel(process.env.DEBUG) && process.env.DEBUG) ||
-			(process.env.NODE_ENV === 'development' ? LogLevel.Debug : LogLevel.Log)
+		(isValidLogLevel(process.env.LOGLEVEL) && process.env.LOGLEVEL) ||
+			(isValidLogLevel(config.loglevel) && config.loglevel) ||
+			(process.env.NODE_ENV === 'development' && LogLevel.Debug) ||
+			LogLevel.Log
 	);
 
 	const { argv } = yargs(hideBin(process.argv))

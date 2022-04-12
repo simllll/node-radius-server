@@ -17,10 +17,10 @@
 	"homepage": "https://github.com/simllll/node-radius-server",
 	"scripts": {
 		"release": "npm run build && standard-version",
-		"debug": "DEBUG=verbose node --tls-min-v1.0 dist/app.js",
+		"debug": "LOGLEVEL=verbose node --tls-min-v1.0 dist/app.js",
 		"start": "node --tls-min-v1.0 dist/app.js",
 		"build": "tsc",
-		"dev": "ts-node src/app.ts",
+		"dev": "ts-node --esm src/app.ts",
 		"test": "mocha -r ts-node/register __tests__/**/*.test.ts",
 		"test-ttls-pap": "__tests__/eapol_test -c __tests__/ttls-pap.conf -s testing123",
 		"test-radtest": "radtest -x user pwd localhost 1812 testing123",

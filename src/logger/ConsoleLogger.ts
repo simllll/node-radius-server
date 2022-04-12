@@ -9,7 +9,9 @@ export enum LogLevel {
 }
 
 export class ConsoleLogger implements ILogger {
-	constructor(private readonly logLevel: LogLevel) {}
+	constructor(private readonly logLevel: LogLevel) {
+		console.log(`ConsoleLogger initialized with LogLevel: ${logLevel}`);
+	}
 
 	error(message: unknown, ...optionalParams: unknown[]): void {
 		if (this.logLevel >= LogLevel.Error) {
