@@ -14,32 +14,49 @@ export class ConsoleLogger implements ILogger {
 	}
 
 	error(message: unknown, ...optionalParams: unknown[]): void {
-		if (this.logLevel >= LogLevel.Error) {
-			console.error(message, ...optionalParams);
+		switch (this.logLevel) {
+			case LogLevel.Error:
+				console.error(message, ...optionalParams);
+				break;
+			default:
 		}
 	}
 
 	warn(message: unknown, ...optionalParams: unknown[]): void {
-		if (this.logLevel >= LogLevel.Warn) {
-			console.warn(message, ...optionalParams);
+		switch (this.logLevel) {
+			case LogLevel.Warn:
+			case LogLevel.Error:
+				console.warn(message, ...optionalParams);
+				break;
+			default:
 		}
 	}
 
 	log(message: unknown, ...optionalParams: unknown[]): void {
-		if (this.logLevel >= LogLevel.Log) {
-			console.log(message, ...optionalParams);
+		switch (this.logLevel) {
+			case LogLevel.Log:
+			case LogLevel.Warn:
+			case LogLevel.Error:
+				console.log(message, ...optionalParams);
+				break;
+			default:
 		}
 	}
 
 	debug(message: unknown, ...optionalParams: unknown[]): void {
-		if (this.logLevel >= LogLevel.Debug) {
-			console.debug(message, ...optionalParams);
+		switch (this.logLevel) {
+			case LogLevel.Debug:
+			case LogLevel.Log:
+			case LogLevel.Warn:
+			case LogLevel.Error:
+				console.debug(message, ...optionalParams);
+				break;
+			default:
 		}
 	}
 
 	verbose(message: unknown, ...optionalParams: unknown[]): void {
-		if (this.logLevel >= LogLevel.Verbose) {
-			console.debug(message, ...optionalParams);
-		}
+		// output all
+		console.debug(message, ...optionalParams);
 	}
 }
