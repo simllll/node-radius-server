@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.3](https://github.com/simllll/node-radius-server/compare/v2.1.2...v2.1.3) (2022-04-12)
+
+
+### Bug Fixes
+
+* improve google ldap auth ([24ab648](https://github.com/simllll/node-radius-server/commit/24ab6486a6eaf242957cd33bb5d4c82a5fcd9a9a))
+* radius import ([b1e4d5d](https://github.com/simllll/node-radius-server/commit/b1e4d5dea4820aa073afb62fe5d7ca74900aaf65))
+* yargs usage ([9cb0fe5](https://github.com/simllll/node-radius-server/commit/9cb0fe53281e79a3994f9600687d57cff3c6e4e4))
+
 ### [2.1.2](https://github.com/simllll/node-radius-server/compare/v2.1.1...v2.1.2) (2022-04-11)
 
 
