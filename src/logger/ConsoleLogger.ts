@@ -70,7 +70,7 @@ export class ConsoleLogger implements ILogger {
 
 	context(context: string) {
 		return {
-			...this,
+			context: this.context.bind(this),
 			error: (message: unknown, ...args) => this.error(context, message, ...args),
 			warn: (message: unknown, ...args) => this.warn(context, message, ...args),
 			log: (message: unknown, ...args) => this.log(context, message, ...args),
