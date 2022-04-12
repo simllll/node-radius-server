@@ -27,15 +27,13 @@ interface IGoogleLDAPAuthOptions {
 }
 
 export class GoogleLDAPAuth implements IAuthentication {
-	private lastDNsFetch: Date;
-
-	private allValidDNsCache: { [key: string]: string };
-
 	private base: string;
 
 	private config: ClientOptions;
 
-	searchBase: string;
+	private searchBase: string;
+
+	private dnsFetch: Promise<{ [key: string]: string }> | undefined;
 
 	constructor(config: IGoogleLDAPAuthOptions, private logger: ILogger) {
 		this.base = config.base;
@@ -53,61 +51,72 @@ export class GoogleLDAPAuth implements IAuthentication {
 			tlsOptions,
 		};
 
-		this.fetchDNs().catch((err) => {
+		this.dnsFetch = this.fetchDNs();
+		this.dnsFetch.catch((err) => {
 			this.logger.error('fatal error google ldap auth, cannot fetch DNs', err);
 		});
 	}
 
-	private async fetchDNs() {
-		const dns: { [key: string]: string } = {};
+	private async fetchDNs(): Promise<{ [key: string]: string }> {
+		try {
+			const dns: { [key: string]: string } = {};
 
-		await new Promise<void>((resolve, reject) => {
-			const ldapDNClient = ldapjs.createClient(this.config).on('error', (error) => {
-				this.logger.error('Error in ldap', error);
-				reject(error);
-			});
+			const dnResult = await new Promise<{ [key: string]: string }>((resolve, reject) => {
+				const ldapDNClient = ldapjs.createClient(this.config).on('error', (error) => {
+					this.logger.error('Error in ldap', error);
+					reject(error);
+				});
 
-			ldapDNClient.search(
-				this.searchBase,
-				{
-					scope: 'sub',
-				},
-				(err, res) => {
-					if (err) {
-						reject(err);
-						return;
-					}
+				ldapDNClient.search(
+					this.searchBase,
+					{
+						scope: 'sub',
+						// only select required attributes
+						attributes: [...usernameFields, 'dn'],
+					},
+					(err, res) => {
+						if (err) {
+							reject(err);
+							return;
+						}
 
-					res.on('searchEntry', (entry) => {
-						// this.logger.debug('entry: ' + JSON.stringify(entry.object));
-						usernameFields.forEach((field) => {
-							const index = entry.object[field] as string;
-							dns[index] = entry.object.dn;
+						res.on('searchEntry', (entry) => {
+							// this.logger.debug('entry: ' + JSON.stringify(entry.object));
+							usernameFields.forEach((field) => {
+								const index = entry.object[field] as string;
+								dns[index] = entry.object.dn;
+							});
 						});
-					});
 
-					res.on('searchReference', (referral) => {
-						this.logger.debug(`referral: ${referral.uris.join()}`);
-					});
+						res.on('searchReference', (referral) => {
+							this.logger.debug(`referral: ${referral.uris.join()}`);
+						});
 
-					res.on('error', (ldapErr) => {
-						this.logger.error(`error: ${JSON.stringify(ldapErr)}`);
-						reject(ldapErr);
-					});
+						res.on('error', (ldapErr) => {
+							this.logger.error(`error: ${JSON.stringify(ldapErr)}`);
+							reject(ldapErr);
+						});
 
-					res.on('end', (result) => {
-						console.log('this', this);
-						this.logger.debug(`ldap status: ${result?.status}`);
+						res.on('end', (result) => {
+							console.log('this', this);
+							this.logger.debug(`ldap status: ${result?.status}`);
 
-						// replace with new dns
-						this.allValidDNsCache = dns;
-						// this.logger.debug('allValidDNsCache', this.allValidDNsCache);
-						resolve();
-					});
-				}
-			);
-		});
-		this.lastDNsFetch = new Date();
+							// this.logger.debug('allValidDNsCache', this.allValidDNsCache);
+							resolve(dns);
+						});
+					}
+				);
+			});
+			setTimeout(() => {
+				this.dnsFetch = undefined;
+			}, 60 * 60 * 12 * 1000); // reset cache after 12h
+			return dnResult;
+		} catch (err) {
+			console.error('dns fetch err', err);
+			// retry dns fetch next time
+			this.dnsFetch = undefined;
+			throw err;
+		}
 	}
 
 	async authenticate(
@@ -128,17 +137,18 @@ export class GoogleLDAPAuth implements IAuthentication {
 
 		let dnsFetched = false;
 
-		if (!this.lastDNsFetch || this.lastDNsFetch < cacheValidTime || forceFetching) {
+		if (!this.dnsFetch || forceFetching) {
 			this.logger.debug('fetching dns');
-			await this.fetchDNs();
+			this.dnsFetch = this.fetchDNs();
 			dnsFetched = true;
 		}
+		const allValidDNsCache = await this.dnsFetch;
 
 		if (count > 5) {
 			throw new Error('Failed to authenticate with LDAP!');
 		}
 		// const dn = ;
-		const dn = this.allValidDNsCache[username];
+		const dn = allValidDNsCache[username];
 		if (!dn) {
 			if (!dnsFetched && !forceFetching) {
 				return this.authenticate(username, password, count, true);
