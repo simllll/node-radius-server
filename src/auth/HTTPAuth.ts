@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import { IAuthentication } from '../interfaces/Authentication.js';
-import { ILogger } from '../interfaces/Logger.js';
+import { IContextLogger, ILogger } from '../interfaces/Logger.js';
 
 interface IHTTPAuthOptions {
 	url: string;
@@ -9,8 +9,11 @@ interface IHTTPAuthOptions {
 export class HTTPAuth implements IAuthentication {
 	private url: string;
 
-	constructor(config: IHTTPAuthOptions, private logger: ILogger) {
+	private logger: IContextLogger;
+
+	constructor(config: IHTTPAuthOptions, logger: ILogger) {
 		this.url = config.url;
+		this.logger = logger.context('HTTPAuth');
 	}
 
 	async authenticate(username: string, password: string) {

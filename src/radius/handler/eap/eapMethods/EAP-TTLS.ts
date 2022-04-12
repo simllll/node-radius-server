@@ -16,7 +16,7 @@ import {
 import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../../helpers.js';
 import { EAPMessageType, IEAPMethod } from '../../../../interfaces/EAPMethod.js';
 import { IAuthentication } from '../../../../interfaces/Authentication.js';
-import { ILogger } from '../../../../interfaces/Logger.js';
+import { IContextLogger, ILogger } from '../../../../interfaces/Logger.js';
 
 function tlsHasExportKeyingMaterial(tlsSocket): tlsSocket is {
 	exportKeyingMaterial: (length: number, label: string, context?: Buffer) => Buffer;
@@ -43,6 +43,8 @@ export class EAPTTLS implements IEAPMethod {
 	private queueData = new NodeCache({ useClones: false, stdTTL: 60 }); // queue data maximum for 60 seconds
 
 	private openTLSSockets = new NodeCache({ useClones: false, stdTTL: 3600 }); // keep sockets for about one hour
+
+	private logger: IContextLogger;
 
 	getEAPType(): number {
 		return EAPMessageType.TTLS;
@@ -71,10 +73,12 @@ export class EAPTTLS implements IEAPMethod {
 		private authentication: IAuthentication,
 		private tlsOptions: tls.SecureContextOptions,
 		private innerTunnel: IPacketHandler,
-		private logger: ILogger,
+		logger: ILogger,
 		private secret: string,
 		private vlan?: number
-	) {}
+	) {
+		this.logger = logger.context('EAPTTLS');
+	}
 
 	private buildEAPTTLS(
 		identifier: number,

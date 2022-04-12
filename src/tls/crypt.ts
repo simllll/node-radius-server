@@ -5,7 +5,6 @@ import * as crypto from 'crypto';
 import DuplexPair from 'native-duplexpair';
 import NodeCache from 'node-cache';
 import { ILogger } from '../interfaces/Logger.js';
-// import * as constants from 'constants';
 
 export interface ITLSServer {
 	events: events.EventEmitter;
@@ -16,7 +15,9 @@ const resumeSessions = new NodeCache({ stdTTL: 86400 }); // session reidentifica
 
 // https://nodejs.org/api/tls.html
 export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILogger): ITLSServer {
-	logger.debug('tlsOptions', tlsOptions);
+	const ctxLogger = logger.context('crypt');
+
+	ctxLogger.debug('tlsOptions', tlsOptions);
 	const secureContext = createSecureContext(tlsOptions);
 
 	const duplexpair = new DuplexPair();
@@ -34,7 +35,7 @@ export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILo
 
 	// for older tls versions without ticketing support
 	cleartext.on('newSession', (sessionId: Buffer, sessionData: Buffer, callback: () => void) => {
-		logger.debug(`TLS new session (${sessionId.toString('hex')})`);
+		ctxLogger.debug(`TLS new session (${sessionId.toString('hex')})`);
 
 		resumeSessions.set(sessionId.toString('hex'), sessionData);
 		callback();
@@ -46,7 +47,7 @@ export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILo
 			const resumedSession = (resumeSessions.get(sessionId.toString('hex')) as Buffer) || null;
 
 			if (resumedSession) {
-				logger.debug(`TLS resumed session (${sessionId.toString('hex')})`);
+				ctxLogger.debug(`TLS resumed session (${sessionId.toString('hex')})`);
 			}
 
 			callback(null, resumedSession);
@@ -72,7 +73,7 @@ export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILo
 		const cipher = cleartext.getCipher();
 
 		if (cipher) {
-			logger.debug(`TLS negotiated (${cipher.name}, ${cipher.version})`);
+			ctxLogger.debug(`TLS negotiated (${cipher.name}, ${cipher.version})`);
 		}
 
 		cleartext.on('data', (data: Buffer) => {
@@ -81,21 +82,21 @@ export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILo
 		});
 
 		cleartext.once('close', (_data: Buffer) => {
-			logger.debug('cleartext close');
+			ctxLogger.debug('cleartext close');
 			emitter.emit('end');
 		});
 
 		cleartext.on('keylog', (line) => {
-			logger.debug('############ KEYLOG #############', line);
+			ctxLogger.debug('############ KEYLOG #############', line);
 			// cleartext.getTicketKeys()
 		});
 
-		logger.debug('*********** new TLS connection established / secured ********');
+		ctxLogger.debug('*********** new TLS connection established / secured ********');
 		emitter.emit('secured', cleartext.isSessionReused());
 	});
 
 	cleartext.on('error', (err?: Error) => {
-		logger.debug('cleartext error', err);
+		ctxLogger.debug('cleartext error', err);
 
 		encrypted.destroy();
 		cleartext.destroy(err);

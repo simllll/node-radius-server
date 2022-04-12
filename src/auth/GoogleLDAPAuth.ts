@@ -2,7 +2,7 @@ import ldapjs, { ClientOptions } from 'ldapjs';
 import * as tls from 'tls';
 import * as fs from 'fs';
 import { IAuthentication } from '../interfaces/Authentication.js';
-import { ILogger } from '../interfaces/Logger.js';
+import { IContextLogger, ILogger } from '../interfaces/Logger.js';
 
 const usernameFields = ['posixUid', 'mail'];
 
@@ -35,9 +35,12 @@ export class GoogleLDAPAuth implements IAuthentication {
 
 	private dnsFetch: Promise<{ [key: string]: string }> | undefined;
 
-	constructor(config: IGoogleLDAPAuthOptions, private logger: ILogger) {
+	private logger: IContextLogger;
+
+	constructor(config: IGoogleLDAPAuthOptions, logger: ILogger) {
 		this.base = config.base;
 		this.searchBase = config.searchBase || `ou=users,${this.base}`;
+		this.logger = logger.context('GoogleLDAPAuth');
 
 		const tlsOptions = {
 			key: fs.readFileSync(config.tls.keyFile),
@@ -124,9 +127,6 @@ export class GoogleLDAPAuth implements IAuthentication {
 		count = 0,
 		forceFetching = false
 	): Promise<boolean> {
-		const cacheValidTime = new Date();
-		cacheValidTime.setHours(cacheValidTime.getHours() - 12);
-
 		/*
 		 just a test for super slow google responses
 		await new Promise((resolve, reject) => {
@@ -141,13 +141,13 @@ export class GoogleLDAPAuth implements IAuthentication {
 			this.dnsFetch = this.fetchDNs();
 			dnsFetched = true;
 		}
-		const allValidDNsCache = await this.dnsFetch;
+		const resolvedDNs = await this.dnsFetch;
 
 		if (count > 5) {
 			throw new Error('Failed to authenticate with LDAP!');
 		}
 		// const dn = ;
-		const dn = allValidDNsCache[username];
+		const dn = resolvedDNs[username];
 		if (!dn) {
 			if (!dnsFetched && !forceFetching) {
 				return this.authenticate(username, password, count, true);

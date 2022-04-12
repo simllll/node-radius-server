@@ -1,6 +1,6 @@
 import { SMTPClient } from 'smtp-client';
 import { IAuthentication } from '../interfaces/Authentication.js';
-import { ILogger } from '../interfaces/Logger.js';
+import { IContextLogger, ILogger } from '../interfaces/Logger.js';
 
 interface ISMTPAuthOptions {
 	host: string;
@@ -18,7 +18,10 @@ export class SMTPAuth implements IAuthentication {
 
 	private validHosts?: string[];
 
-	constructor(options: ISMTPAuthOptions, private logger: ILogger) {
+	private logger: IContextLogger;
+
+	constructor(options: ISMTPAuthOptions, logger: ILogger) {
+		this.logger = logger.context('SMTPAuth');
 		this.host = options.host;
 
 		if (options.port !== undefined) {

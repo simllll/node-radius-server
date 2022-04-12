@@ -1,7 +1,7 @@
 import NodeCache from 'node-cache';
 import { Cache, ExpirationStrategy, MemoryStorage } from '@hokify/node-ts-cache';
 import { IAuthentication } from './interfaces/Authentication.js';
-import { ILogger } from './interfaces/Logger.js';
+import { IContextLogger, ILogger } from './interfaces/Logger.js';
 
 const cacheStrategy = new ExpirationStrategy(new MemoryStorage());
 /**
@@ -11,7 +11,11 @@ const cacheStrategy = new ExpirationStrategy(new MemoryStorage());
 export class Authentication implements IAuthentication {
 	private cache = new NodeCache();
 
-	constructor(private authenticator: IAuthentication, private logger: ILogger) {}
+	private logger: IContextLogger;
+
+	constructor(private authenticator: IAuthentication, logger: ILogger) {
+		this.logger = logger.context('Authentication');
+	}
 
 	@Cache(cacheStrategy, { ttl: 60000 })
 	async authenticate(username: string, password: string): Promise<boolean> {

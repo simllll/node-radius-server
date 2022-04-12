@@ -1,6 +1,6 @@
 import * as imaps from 'imap-simple';
 import { IAuthentication } from '../interfaces/Authentication.js';
-import { ILogger } from '../interfaces/Logger.js';
+import { IContextLogger, ILogger } from '../interfaces/Logger.js';
 
 interface IIMAPAuthOptions {
 	host: string;
@@ -18,7 +18,9 @@ export class IMAPAuth implements IAuthentication {
 
 	private validHosts?: string[];
 
-	constructor(config: IIMAPAuthOptions, private logger: ILogger) {
+	private logger: IContextLogger;
+
+	constructor(config: IIMAPAuthOptions, logger: ILogger) {
 		this.host = config.host;
 		if (config.port !== undefined) {
 			this.port = config.port;
@@ -29,6 +31,7 @@ export class IMAPAuth implements IAuthentication {
 		if (config.validHosts !== undefined) {
 			this.validHosts = config.validHosts;
 		}
+		this.logger = logger.context('IMAPAuth');
 	}
 
 	async authenticate(username: string, password: string) {

@@ -7,18 +7,21 @@ import { EAPTTLS } from './handler/eap/eapMethods/EAP-TTLS.js';
 import { EAPGTC } from './handler/eap/eapMethods/EAP-GTC.js';
 import { EAPMD5 } from './handler/eap/eapMethods/EAP-MD5.js';
 import { UserPasswordPacketHandler } from './handler/UserPasswordPacketHandler.js';
-import { ILogger } from '../interfaces/Logger.js';
+import { IContextLogger, ILogger } from '../interfaces/Logger.js';
 
 export class PacketHandler implements IPacketHandler {
 	packetHandlers: IPacketHandler[] = [];
 
+	private logger: IContextLogger;
+
 	constructor(
 		authentication: IAuthentication,
 		tlsOptions: tls.SecureContextOptions,
-		private logger: ILogger,
+		logger: ILogger,
 		private secret: string,
 		private vlan?: number
 	) {
+		this.logger = logger.context('PacketHandler');
 		this.packetHandlers.push(
 			new EAPPacketHandler(
 				[

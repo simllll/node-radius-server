@@ -5,10 +5,14 @@ import {
 	IPacketHandlerResult,
 	PacketResponseCode,
 } from '../../interfaces/PacketHandler.js';
-import { ILogger } from '../../interfaces/Logger.js';
+import { IContextLogger, ILogger } from '../../interfaces/Logger.js';
 
 export class UserPasswordPacketHandler implements IPacketHandler {
-	constructor(private authentication: IAuthentication, private logger: ILogger) {}
+	private logger: IContextLogger;
+
+	constructor(private authentication: IAuthentication, logger: ILogger) {
+		this.logger = logger.context('UserPasswordPacketHandler');
+	}
 
 	async handlePacket(packet: IPacket): Promise<IPacketHandlerResult> {
 		const username = packet.attributes['User-Name'];

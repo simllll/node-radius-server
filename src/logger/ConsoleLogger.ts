@@ -13,50 +13,61 @@ export class ConsoleLogger implements ILogger {
 		console.log(`ConsoleLogger initialized with LogLevel: ${logLevel}`);
 	}
 
-	error(message: unknown, ...optionalParams: unknown[]): void {
+	error(context: string, message: unknown, ...optionalParams: unknown[]): void {
 		switch (this.logLevel) {
 			case LogLevel.Error:
-				console.error(message, ...optionalParams);
+				console.error(`[${context}]`, message, ...optionalParams);
 				break;
 			default:
 		}
 	}
 
-	warn(message: unknown, ...optionalParams: unknown[]): void {
+	warn(context: string, message: unknown, ...optionalParams: unknown[]): void {
 		switch (this.logLevel) {
 			case LogLevel.Warn:
 			case LogLevel.Error:
-				console.warn(message, ...optionalParams);
+				console.warn(`[${context}]`, message, ...optionalParams);
 				break;
 			default:
 		}
 	}
 
-	log(message: unknown, ...optionalParams: unknown[]): void {
+	log(context: string, message: unknown, ...optionalParams: unknown[]): void {
 		switch (this.logLevel) {
 			case LogLevel.Log:
 			case LogLevel.Warn:
 			case LogLevel.Error:
-				console.log(message, ...optionalParams);
+				console.log(`[${context}]`, message, ...optionalParams);
 				break;
 			default:
 		}
 	}
 
-	debug(message: unknown, ...optionalParams: unknown[]): void {
+	debug(context: string, message: unknown, ...optionalParams: unknown[]): void {
 		switch (this.logLevel) {
 			case LogLevel.Debug:
 			case LogLevel.Log:
 			case LogLevel.Warn:
 			case LogLevel.Error:
-				console.debug(message, ...optionalParams);
+				console.debug(`[${context}]`, message, ...optionalParams);
 				break;
 			default:
 		}
 	}
 
-	verbose(message: unknown, ...optionalParams: unknown[]): void {
+	verbose(context: string, message: unknown, ...optionalParams: unknown[]): void {
 		// output all
-		console.debug(message, ...optionalParams);
+		console.debug(`[${context}]`, message, ...optionalParams);
+	}
+
+	context(context: string) {
+		return {
+			...this,
+			error: (message: unknown, ...args) => this.error(context, message, ...args),
+			warn: (message: unknown, ...args) => this.warn(context, message, ...args),
+			log: (message: unknown, ...args) => this.log(context, message, ...args),
+			debug: (message: unknown, ...args) => this.debug(context, message, ...args),
+			verbose: (message: unknown, ...args) => this.verbose(context, message, ...args),
+		};
 	}
 }

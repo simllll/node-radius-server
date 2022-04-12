@@ -40,8 +40,8 @@ export class RadiusServer extends UDPServer {
 		// test node version
 		const testSocket = startTLSServer(this.options.tlsOptions, this.logger);
 		if (typeof testSocket.tls.exportKeyingMaterial !== 'function') {
-			this.logger.error(`UNSUPPORTED NODE VERSION (${process.version}) FOUND!!`);
-			this.logger.log('min version supported is node js 14. run "sudo npx n 14"');
+			this.logger.error('RadiusServer', `UNSUPPORTED NODE VERSION (${process.version}) FOUND!!`);
+			this.logger.log('RadiusServer', 'min version supported is node js 14. run "sudo npx n 14"');
 			process.exit(-1);
 		}
 		return super.start();
@@ -66,7 +66,7 @@ export class RadiusServer extends UDPServer {
 					);
 				}
 			} catch (err) {
-				this.logger.error('err', err);
+				this.logger.error('RadiusServer', 'err', err);
 			}
 		});
 	}
