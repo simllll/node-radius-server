@@ -15,6 +15,10 @@ export class ConsoleLogger implements ILogger {
 
 	error(context: string, message: unknown, ...optionalParams: unknown[]): void {
 		switch (this.logLevel) {
+			case LogLevel.Verbose:
+			case LogLevel.Debug:
+			case LogLevel.Log:
+			case LogLevel.Warn:
 			case LogLevel.Error:
 				console.error(`[${context}]`, message, ...optionalParams);
 				break;
@@ -24,8 +28,10 @@ export class ConsoleLogger implements ILogger {
 
 	warn(context: string, message: unknown, ...optionalParams: unknown[]): void {
 		switch (this.logLevel) {
+			case LogLevel.Verbose:
+			case LogLevel.Debug:
+			case LogLevel.Log:
 			case LogLevel.Warn:
-			case LogLevel.Error:
 				console.warn(`[${context}]`, message, ...optionalParams);
 				break;
 			default:
@@ -34,9 +40,9 @@ export class ConsoleLogger implements ILogger {
 
 	log(context: string, message: unknown, ...optionalParams: unknown[]): void {
 		switch (this.logLevel) {
+			case LogLevel.Verbose:
+			case LogLevel.Debug:
 			case LogLevel.Log:
-			case LogLevel.Warn:
-			case LogLevel.Error:
 				console.log(`[${context}]`, message, ...optionalParams);
 				break;
 			default:
@@ -45,10 +51,8 @@ export class ConsoleLogger implements ILogger {
 
 	debug(context: string, message: unknown, ...optionalParams: unknown[]): void {
 		switch (this.logLevel) {
+			case LogLevel.Verbose:
 			case LogLevel.Debug:
-			case LogLevel.Log:
-			case LogLevel.Warn:
-			case LogLevel.Error:
 				console.debug(`[${context}]`, message, ...optionalParams);
 				break;
 			default:
@@ -56,8 +60,12 @@ export class ConsoleLogger implements ILogger {
 	}
 
 	verbose(context: string, message: unknown, ...optionalParams: unknown[]): void {
-		// output all
-		console.debug(`[${context}]`, message, ...optionalParams);
+		switch (this.logLevel) {
+			case LogLevel.Verbose:
+				console.debug(`[${context}]`, message, ...optionalParams);
+				break;
+			default:
+		}
 	}
 
 	context(context: string) {
