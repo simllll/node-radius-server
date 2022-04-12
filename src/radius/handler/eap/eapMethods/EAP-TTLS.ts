@@ -3,8 +3,7 @@
 /* eslint-disable no-bitwise */
 import * as tls from 'tls';
 import NodeCache from 'node-cache';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-import * as radius from 'radius';
+import radius from 'radius';
 
 import { encodeTunnelPW, ITLSServer, startTLSServer } from '../../../../tls/crypt.js';
 import {

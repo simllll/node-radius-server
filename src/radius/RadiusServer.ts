@@ -1,4 +1,4 @@
-import * as radius from 'radius';
+import radius from 'radius';
 import { EventEmitter } from 'events';
 import { IPacketHandlerResult, PacketResponseCode } from '../interfaces/PacketHandler.js';
 
