@@ -1,7 +1,7 @@
 import * as LdapAuth from 'ldapauth-fork';
 import * as fs from 'fs';
 import { IAuthentication } from '../interfaces/Authentication.js';
-import { IContextLogger, ILogger } from '../interfaces/Logger.js';
+import { Logger } from '../logger/Logger.js';
 
 interface ILDAPAuthOptions {
 	/** ldap url
@@ -28,17 +28,16 @@ interface ILDAPAuthOptions {
 }
 
 export class LDAPAuth implements IAuthentication {
+	private logger = new Logger('LDAPAuth');
+
 	private ldap: LdapAuth;
 
-	private logger: IContextLogger;
-
-	constructor(config: ILDAPAuthOptions, logger: ILogger) {
+	constructor(config: ILDAPAuthOptions) {
 		const tlsOptions = {
 			key: fs.readFileSync(config.tls.keyFile),
 			cert: fs.readFileSync(config.tls.certFile),
 			...config.tlsOptions,
 		};
-		this.logger = logger.context('LDAPAuth');
 
 		this.ldap = new LdapAuth({
 			url: config.url,

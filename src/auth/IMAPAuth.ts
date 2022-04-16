@@ -1,6 +1,6 @@
 import * as imaps from 'imap-simple';
 import { IAuthentication } from '../interfaces/Authentication.js';
-import { IContextLogger, ILogger } from '../interfaces/Logger.js';
+import { Logger } from '../logger/Logger.js';
 
 interface IIMAPAuthOptions {
 	host: string;
@@ -10,6 +10,8 @@ interface IIMAPAuthOptions {
 }
 
 export class IMAPAuth implements IAuthentication {
+	private logger = new Logger('IMAPAuth');
+
 	private host: string;
 
 	private port = 143;
@@ -18,9 +20,7 @@ export class IMAPAuth implements IAuthentication {
 
 	private validHosts?: string[];
 
-	private logger: IContextLogger;
-
-	constructor(config: IIMAPAuthOptions, logger: ILogger) {
+	constructor(config: IIMAPAuthOptions) {
 		this.host = config.host;
 		if (config.port !== undefined) {
 			this.port = config.port;
@@ -31,14 +31,13 @@ export class IMAPAuth implements IAuthentication {
 		if (config.validHosts !== undefined) {
 			this.validHosts = config.validHosts;
 		}
-		this.logger = logger.context('IMAPAuth');
 	}
 
 	async authenticate(username: string, password: string) {
 		if (this.validHosts) {
 			const domain = username.split('@').pop();
 			if (!domain || !this.validHosts.includes(domain)) {
-				this.logger.log('invalid or no domain in username', username, domain);
+				this.logger.log(`invalid or no domain in username ${username} ${domain}`);
 				return false;
 			}
 		}
