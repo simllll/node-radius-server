@@ -4,23 +4,19 @@ import * as events from 'events';
 import { EventEmitter } from 'events';
 import { newDeferredPromise } from '../helpers.js';
 import type { IServer } from '../interfaces/Server.js';
-import type { ILogger } from '../interfaces/Logger.js';
+import { Logger } from '../logger/Logger.js';
 
 export class UDPServer extends events.EventEmitter implements IServer {
+	protected logger = new Logger('UDPServer');
+
 	static MAX_RETRIES = 3;
 
 	private timeout: { [key: string]: NodeJS.Timeout } = {};
 
 	private server: dgram.Socket;
 
-	constructor(
-		private port: number,
-		private address: string,
-		protected logger: ILogger,
-		type: SocketType = 'udp4'
-	) {
+	constructor(private port: number, private address: string, type: SocketType = 'udp4') {
 		super();
-
 		this.server = dgram.createSocket(type);
 	}
 
@@ -36,7 +32,6 @@ export class UDPServer extends events.EventEmitter implements IServer {
 		const sendResponse = (): void => {
 			if (retried > 0) {
 				this.logger.warn(
-					'UDPServer',
 					`no confirmation of last message from ${address}:${port}, re-sending response... (bytes: ${msg.length}, try: ${retried}/${UDPServer.MAX_RETRIES})`
 				);
 			}
@@ -61,7 +56,7 @@ export class UDPServer extends events.EventEmitter implements IServer {
 		const startServer = newDeferredPromise();
 		this.server.on('listening', () => {
 			const address = this.server.address();
-			this.logger.log('UDPServer', `radius server listening ${address.address}:${address.port}`);
+			this.logger.log(`radius server listening ${address.address}:${address.port}`);
 
 			this.setupListeners();
 			startServer.resolve();

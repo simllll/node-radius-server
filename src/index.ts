@@ -1,8 +1,14 @@
 import { IAuthentication } from './interfaces/Authentication.js';
-import { RadiusServerOptions } from './interfaces/RadiusServerOptions.js';
+import { IRadiusServerOptions } from './interfaces/RadiusServerOptions.js';
 import { RadiusServer } from './radius/RadiusServer.js';
+import { ILogger } from './interfaces/Logger.js';
 
-export { IAuthentication as RadiusAuthentication, RadiusServerOptions, RadiusServer };
+export {
+	IAuthentication as RadiusAuthentication,
+	IRadiusServerOptions as RadiusServerOptions,
+	RadiusServer,
+	ILogger as RadiusLogger,
+};
 
 /*
 	Export RadiusServer and relevant interfaces, so it can be used in other projects (e.g. a NestJS backend)

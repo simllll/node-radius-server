@@ -5,19 +5,17 @@ import { makeid } from '../../helpers.js';
 import { IPacket, IPacketHandler, IPacketHandlerResult } from '../../interfaces/PacketHandler.js';
 import { IEAPMethod } from '../../interfaces/EAPMethod.js';
 import { buildEAPResponse, decodeEAPHeader } from './eap/EAPHelper.js';
-import { IContextLogger, ILogger } from '../../interfaces/Logger.js';
+import { Logger } from '../../logger/Logger.js';
 
 export class EAPPacketHandler implements IPacketHandler {
+	private logger = new Logger('EAPPacketHandler');
+
 	private identities = new NodeCache({ useClones: false, stdTTL: 60 }); // queue data maximum for 60 seconds
 
 	// 	private eapConnectionStates: { [key: string]: { validMethods: IEAPMethod[] } } = {};
 	private eapConnectionStates = new NodeCache({ useClones: false, stdTTL: 3600 }); // max for one hour
 
-	private logger: IContextLogger;
-
-	constructor(private eapMethods: IEAPMethod[], logger: ILogger) {
-		this.logger = logger.context('EAPPacketHandler');
-	}
+	constructor(private eapMethods: IEAPMethod[]) {}
 
 	async handlePacket(packet: IPacket, handlingType?: number): Promise<IPacketHandlerResult> {
 		if (!packet.attributes['EAP-Message']) {

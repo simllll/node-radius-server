@@ -5,31 +5,25 @@ import { IPacketHandlerResult, PacketResponseCode } from '../interfaces/PacketHa
 import { PacketHandler } from './PacketHandler.js';
 import { UDPServer } from '../server/UDPServer.js';
 import { startTLSServer } from '../tls/crypt.js';
-import { RadiusServerOptions } from '../interfaces/RadiusServerOptions.js';
-import { ConsoleLogger, LogLevel } from '../logger/ConsoleLogger.js';
-
-function hasLogger(options): options is { logger: ConsoleLogger } {
-	return !!options.logger;
-}
-
-function hasLogLevel(options): options is { logLevel?: LogLevel } {
-	return options.logLevel !== undefined;
-}
+import { IRadiusServerOptions } from '../interfaces/RadiusServerOptions.js';
+import { ConsoleLogger } from '../logger/ConsoleLogger.js';
+import { Logger } from '../logger/Logger.js';
 
 export class RadiusServer extends UDPServer {
+	protected override logger = new Logger('RadiusServer');
+
 	private packetHandler: PacketHandler;
 
-	constructor(private options: RadiusServerOptions) {
-		super(
-			options.port || 1812,
-			options.address || '0.0.0.0',
-			(hasLogger(options) && options.logger) ||
-				new ConsoleLogger((hasLogLevel(options) && options.logLevel) || LogLevel.Log)
-		);
+	constructor(private options: IRadiusServerOptions) {
+		super(options.port || 1812, options.address || '0.0.0.0');
+		if (options.logger) {
+			Logger.registerLogger(options.logger);
+		} else if (options.logLevel) {
+			Logger.registerLogger(new ConsoleLogger(options.logLevel));
+		}
 		this.packetHandler = new PacketHandler(
 			options.authentication,
 			options.tlsOptions,
-			this.logger,
 			options.secret,
 			options.vlan
 		);
@@ -38,10 +32,10 @@ export class RadiusServer extends UDPServer {
 
 	public override async start(): Promise<EventEmitter> {
 		// test node version
-		const testSocket = startTLSServer(this.options.tlsOptions, this.logger);
+		const testSocket = startTLSServer(this.options.tlsOptions);
 		if (typeof testSocket.tls.exportKeyingMaterial !== 'function') {
-			this.logger.error('RadiusServer', `UNSUPPORTED NODE VERSION (${process.version}) FOUND!!`);
-			this.logger.log('RadiusServer', 'min version supported is node js 14. run "sudo npx n 14"');
+			this.logger.error(`UNSUPPORTED NODE VERSION (${process.version}) FOUND!!`);
+			this.logger.log('min version supported is node js 14. run "sudo npx n 14"');
 			process.exit(-1);
 		}
 		return super.start();
@@ -66,7 +60,7 @@ export class RadiusServer extends UDPServer {
 					);
 				}
 			} catch (err) {
-				this.logger.error('RadiusServer', 'err', err);
+				this.logger.error('err', err);
 			}
 		});
 	}

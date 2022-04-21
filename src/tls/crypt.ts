@@ -4,7 +4,7 @@ import { createSecureContext } from 'tls';
 import * as crypto from 'crypto';
 import DuplexPair from 'native-duplexpair';
 import NodeCache from 'node-cache';
-import { ILogger } from '../interfaces/Logger.js';
+import { Logger } from '../logger/Logger.js';
 
 export interface ITLSServer {
 	events: events.EventEmitter;
@@ -13,11 +13,11 @@ export interface ITLSServer {
 
 const resumeSessions = new NodeCache({ stdTTL: 86400 }); // session reidentification maximum 1 day
 
-// https://nodejs.org/api/tls.html
-export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILogger): ITLSServer {
-	const ctxLogger = logger.context('crypt');
+const logger = new Logger('crypt');
 
-	ctxLogger.debug('tlsOptions', tlsOptions);
+// https://nodejs.org/api/tls.html
+export function startTLSServer(tlsOptions: tls.SecureContextOptions): ITLSServer {
+	logger.debug('tlsOptions', tlsOptions);
 	const secureContext = createSecureContext(tlsOptions);
 
 	const duplexpair = new DuplexPair();
@@ -35,7 +35,7 @@ export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILo
 
 	// for older tls versions without ticketing support
 	cleartext.on('newSession', (sessionId: Buffer, sessionData: Buffer, callback: () => void) => {
-		ctxLogger.debug(`TLS new session (${sessionId.toString('hex')})`);
+		logger.debug(`TLS new session (${sessionId.toString('hex')})`);
 
 		resumeSessions.set(sessionId.toString('hex'), sessionData);
 		callback();
@@ -47,7 +47,7 @@ export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILo
 			const resumedSession = (resumeSessions.get(sessionId.toString('hex')) as Buffer) || null;
 
 			if (resumedSession) {
-				ctxLogger.debug(`TLS resumed session (${sessionId.toString('hex')})`);
+				logger.debug(`TLS resumed session (${sessionId.toString('hex')})`);
 			}
 
 			callback(null, resumedSession);
@@ -73,7 +73,7 @@ export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILo
 		const cipher = cleartext.getCipher();
 
 		if (cipher) {
-			ctxLogger.debug(`TLS negotiated (${cipher.name}, ${cipher.version})`);
+			logger.debug(`TLS negotiated (${cipher.name}, ${cipher.version})`);
 		}
 
 		cleartext.on('data', (data: Buffer) => {
@@ -82,21 +82,21 @@ export function startTLSServer(tlsOptions: tls.SecureContextOptions, logger: ILo
 		});
 
 		cleartext.once('close', (_data: Buffer) => {
-			ctxLogger.debug('cleartext close');
+			logger.debug('cleartext close');
 			emitter.emit('end');
 		});
 
 		cleartext.on('keylog', (line) => {
-			ctxLogger.debug('############ KEYLOG #############', line);
+			logger.debug('############ KEYLOG #############', line);
 			// cleartext.getTicketKeys()
 		});
 
-		ctxLogger.debug('*********** new TLS connection established / secured ********');
+		logger.debug('*********** new TLS connection established / secured ********');
 		emitter.emit('secured', cleartext.isSessionReused());
 	});
 
 	cleartext.on('error', (err?: Error) => {
-		ctxLogger.debug('cleartext error', err);
+		logger.debug('cleartext error', err);
 
 		encrypted.destroy();
 		cleartext.destroy(err);
@@ -177,7 +177,7 @@ export function encodeTunnelPW(key: Buffer, authenticator: Buffer, secret: strin
    Intermediate values b(1), b(2)...c(i) are required.  Encryption
    is performed in the following manner ('+' indicates
    concatenation):
-   
+
       Zorn                         Informational                     [Page 21]
 
    RFC 2548      Microsoft Vendor-specific RADIUS Attributes     March 1999

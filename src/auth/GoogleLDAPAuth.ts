@@ -2,7 +2,7 @@ import ldapjs, { ClientOptions } from 'ldapjs';
 import * as tls from 'tls';
 import * as fs from 'fs';
 import { IAuthentication } from '../interfaces/Authentication.js';
-import { IContextLogger, ILogger } from '../interfaces/Logger.js';
+import { Logger } from '../logger/Logger.js';
 
 const usernameFields = ['posixUid', 'mail'];
 
@@ -27,6 +27,8 @@ interface IGoogleLDAPAuthOptions {
 }
 
 export class GoogleLDAPAuth implements IAuthentication {
+	private logger = new Logger('GoogleLDAPAuth');
+
 	private base: string;
 
 	private config: ClientOptions;
@@ -35,12 +37,9 @@ export class GoogleLDAPAuth implements IAuthentication {
 
 	private dnsFetch: Promise<{ [key: string]: string }> | undefined;
 
-	private logger: IContextLogger;
-
-	constructor(config: IGoogleLDAPAuthOptions, logger: ILogger) {
+	constructor(config: IGoogleLDAPAuthOptions) {
 		this.base = config.base;
 		this.searchBase = config.searchBase || `ou=users,${this.base}`;
-		this.logger = logger.context('GoogleLDAPAuth');
 
 		const tlsOptions = {
 			key: fs.readFileSync(config.tls.keyFile),
@@ -114,7 +113,7 @@ export class GoogleLDAPAuth implements IAuthentication {
 			}, 60 * 60 * 12 * 1000); // reset cache after 12h
 			return dnResult;
 		} catch (err) {
-			console.error('dns fetch err', err);
+			this.logger.error('dns fetch err', err);
 			// retry dns fetch next time
 			this.dnsFetch = undefined;
 			throw err;

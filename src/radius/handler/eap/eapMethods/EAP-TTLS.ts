@@ -16,7 +16,7 @@ import {
 import { MAX_RADIUS_ATTRIBUTE_SIZE, newDeferredPromise } from '../../../../helpers.js';
 import { EAPMessageType, IEAPMethod } from '../../../../interfaces/EAPMethod.js';
 import { IAuthentication } from '../../../../interfaces/Authentication.js';
-import { IContextLogger, ILogger } from '../../../../interfaces/Logger.js';
+import { Logger } from '../../../../logger/Logger.js';
 
 function tlsHasExportKeyingMaterial(tlsSocket): tlsSocket is {
 	exportKeyingMaterial: (length: number, label: string, context?: Buffer) => Buffer;
@@ -37,14 +37,14 @@ interface IAVPEntry {
 }
 
 export class EAPTTLS implements IEAPMethod {
+	private logger = new Logger('EAPTTLS');
+
 	private lastProcessedIdentifier = new NodeCache({ useClones: false, stdTTL: 60 });
 
 	// { [key: string]: Buffer } = {};
 	private queueData = new NodeCache({ useClones: false, stdTTL: 60 }); // queue data maximum for 60 seconds
 
 	private openTLSSockets = new NodeCache({ useClones: false, stdTTL: 3600 }); // keep sockets for about one hour
-
-	private logger: IContextLogger;
 
 	getEAPType(): number {
 		return EAPMessageType.TTLS;
@@ -73,12 +73,9 @@ export class EAPTTLS implements IEAPMethod {
 		private authentication: IAuthentication,
 		private tlsOptions: tls.SecureContextOptions,
 		private innerTunnel: IPacketHandler,
-		logger: ILogger,
 		private secret: string,
 		private vlan?: number
-	) {
-		this.logger = logger.context('EAPTTLS');
-	}
+	) {}
 
 	private buildEAPTTLS(
 		identifier: number,
@@ -89,7 +86,7 @@ export class EAPTTLS implements IEAPMethod {
 		newResponse = true,
 		maxSize = (MAX_RADIUS_ATTRIBUTE_SIZE - 5) * 4
 	): Buffer {
-		this.logger.debug('maxSize', data?.length, ' > ', maxSize);
+		this.logger.debug('maxSize', `${data?.length} > ${maxSize}`);
 
 		/* it's the first one and we have more, therefore include length */
 		const includeLength = maxSize > 0 && data && newResponse && data.length > maxSize;
@@ -418,7 +415,7 @@ export class EAPTTLS implements IEAPMethod {
 			let connection = this.openTLSSockets.get(stateID) as ITLSServer;
 
 			if (!connection) {
-				connection = startTLSServer(this.tlsOptions, this.logger);
+				connection = startTLSServer(this.tlsOptions);
 				this.openTLSSockets.set(stateID, connection);
 
 				connection.events.on('end', () => {
@@ -572,7 +569,7 @@ export class EAPTTLS implements IEAPMethod {
 			// send response
 			return responseData; // this.buildEAPTTLSResponse(identifier, 21, 0x00, stateID, encryptedResponseData);
 		} catch (err) {
-			this.logger.error('decoding of EAP-TTLS package failed', msg, err);
+			this.logger.error(`decoding of EAP-TTLS package failed: ${msg}`, err);
 			return {
 				code: PacketResponseCode.AccessReject,
 			};

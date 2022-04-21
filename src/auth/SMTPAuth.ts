@@ -1,6 +1,6 @@
 import { SMTPClient } from 'smtp-client';
 import { IAuthentication } from '../interfaces/Authentication.js';
-import { IContextLogger, ILogger } from '../interfaces/Logger.js';
+import { Logger } from '../logger/Logger.js';
 
 interface ISMTPAuthOptions {
 	host: string;
@@ -10,6 +10,8 @@ interface ISMTPAuthOptions {
 }
 
 export class SMTPAuth implements IAuthentication {
+	private logger = new Logger('SMTPAuth');
+
 	private host: string;
 
 	private port = 25;
@@ -18,10 +20,7 @@ export class SMTPAuth implements IAuthentication {
 
 	private validHosts?: string[];
 
-	private logger: IContextLogger;
-
-	constructor(options: ISMTPAuthOptions, logger: ILogger) {
-		this.logger = logger.context('SMTPAuth');
+	constructor(options: ISMTPAuthOptions) {
 		this.host = options.host;
 
 		if (options.port !== undefined) {
@@ -41,7 +40,7 @@ export class SMTPAuth implements IAuthentication {
 		if (this.validHosts) {
 			const domain = username.split('@').pop();
 			if (!domain || !this.validHosts.includes(domain)) {
-				this.logger.log('invalid or no domain in username', username, domain);
+				this.logger.log(`invalid or no domain in username ${username} ${domain}`);
 				return false;
 			}
 		}

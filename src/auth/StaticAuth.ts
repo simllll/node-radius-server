@@ -1,5 +1,5 @@
 import { IAuthentication } from '../interfaces/Authentication.js';
-import { IContextLogger, ILogger } from '../interfaces/Logger.js';
+import { Logger } from '../logger/Logger.js';
 
 interface IStaticAuthOtions {
 	validCredentials: {
@@ -9,11 +9,11 @@ interface IStaticAuthOtions {
 }
 
 export class StaticAuth implements IAuthentication {
-	private validCredentials: { username: string; password: string }[];
-	private logger: IContextLogger;
+	private logger = new Logger('StaticAuth');
 
-	constructor(options: IStaticAuthOtions, logger: ILogger) {
-		this.logger = logger.context('StaticAuth');
+	private validCredentials: { username: string; password: string }[];
+
+	constructor(options: IStaticAuthOtions) {
 		this.validCredentials = options.validCredentials;
 	}
 

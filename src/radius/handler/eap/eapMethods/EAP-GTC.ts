@@ -5,10 +5,10 @@ import { IPacketHandlerResult, PacketResponseCode } from '../../../../interfaces
 import { IEAPMethod } from '../../../../interfaces/EAPMethod.js';
 import { IAuthentication } from '../../../../interfaces/Authentication.js';
 import { buildEAPResponse, decodeEAPHeader } from '../EAPHelper.js';
-import { IContextLogger, ILogger } from '../../../../interfaces/Logger.js';
+import { Logger } from '../../../../logger/Logger.js';
 
 export class EAPGTC implements IEAPMethod {
-	private logger: IContextLogger;
+	private logger = new Logger('EAPGTC');
 
 	getEAPType(): number {
 		return 6;
@@ -26,9 +26,7 @@ export class EAPGTC implements IEAPMethod {
 		return buildEAPResponse(identifier, 6, Buffer.from('Password: '));
 	}
 
-	constructor(private authentication: IAuthentication, logger: ILogger) {
-		this.logger = logger.context('EAPGTC');
-	}
+	constructor(private authentication: IAuthentication) {}
 
 	async handleMessage(
 		_identifier: number,
