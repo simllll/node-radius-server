@@ -12,8 +12,8 @@ const usernameFields = ['posixUid', 'mail'];
 interface IGoogleLDAPAuthOptions {
 	/** base DN
 	 *  e.g. 'dc=hokify,dc=com', */
-	base: string;
-	searchBase?: string; // default ou=users,{{base}}
+	base: string | string[];
+	searchBase?: string | string[]; // default ou=users,{{base}}
 	tls: {
 		keyFile: string;
 		certFile: string;
@@ -27,19 +27,20 @@ interface IGoogleLDAPAuthOptions {
 }
 
 export class GoogleLDAPAuth implements IAuthentication {
-	private base: string;
-
 	private config: ClientOptions;
 
-	private searchBase: string;
+	private searchBase: string | string[];
 
 	private dnsFetch: Promise<{ [key: string]: string }> | undefined;
 
 	private logger: IContextLogger;
 
 	constructor(config: IGoogleLDAPAuthOptions, logger: ILogger) {
-		this.base = config.base;
-		this.searchBase = config.searchBase || `ou=users,${this.base}`;
+		this.searchBase =
+			config.searchBase ||
+			(Array.isArray(config.base)
+				? config.base.map((base) => `ou=users,${base}`)
+				: `ou=users,${config.base}`);
 		this.logger = logger.context('GoogleLDAPAuth');
 
 		const tlsOptions = {
@@ -64,55 +65,62 @@ export class GoogleLDAPAuth implements IAuthentication {
 		try {
 			const dns: { [key: string]: string } = {};
 
-			const dnResult = await new Promise<{ [key: string]: string }>((resolve, reject) => {
-				const ldapDNClient = ldapjs.createClient(this.config).on('error', (error) => {
-					this.logger.error('Error in ldap', error);
-					reject(error);
-				});
+			const searchBases = Array.isArray(this.searchBase) ? this.searchBase : [this.searchBase];
 
-				ldapDNClient.search(
-					this.searchBase,
-					{
-						scope: 'sub',
-						// only select required attributes
-						attributes: [...usernameFields, 'dn'],
-					},
-					(err, res) => {
-						if (err) {
-							reject(err);
-							return;
-						}
-
-						res.on('searchEntry', (entry) => {
-							// this.logger.debug('entry: ' + JSON.stringify(entry.object));
-							usernameFields.forEach((field) => {
-								const index = entry.object[field] as string;
-								dns[index] = entry.object.dn;
+			await Promise.all(
+				searchBases.map(
+					(searchBase) =>
+						new Promise<void>((resolve, reject) => {
+							const ldapDNClient = ldapjs.createClient(this.config).on('error', (error) => {
+								this.logger.error('Error in ldap', error);
+								reject(error);
 							});
-						});
 
-						res.on('searchReference', (referral) => {
-							this.logger.debug(`referral: ${referral.uris.join()}`);
-						});
+							ldapDNClient.search(
+								searchBase,
+								{
+									scope: 'sub',
+									// only select required attributes
+									attributes: [...usernameFields, 'dn'],
+								},
+								(err, res) => {
+									if (err) {
+										reject(err);
+										return;
+									}
 
-						res.on('error', (ldapErr) => {
-							this.logger.error(`error: ${JSON.stringify(ldapErr)}`);
-							reject(ldapErr);
-						});
+									res.on('searchEntry', (entry) => {
+										// this.logger.debug('entry: ' + JSON.stringify(entry.object));
+										usernameFields.forEach((field) => {
+											const index = entry.object[field] as string;
+											dns[index] = entry.object.dn;
+										});
+									});
 
-						res.on('end', (result) => {
-							this.logger.debug(`ldap status: ${result?.status}`);
+									res.on('searchReference', (referral) => {
+										this.logger.debug(`referral: ${referral.uris.join()}`);
+									});
 
-							// this.logger.debug('allValidDNsCache', this.allValidDNsCache);
-							resolve(dns);
-						});
-					}
-				);
-			});
+									res.on('error', (ldapErr) => {
+										this.logger.error(`error: ${JSON.stringify(ldapErr)}`);
+										reject(ldapErr);
+									});
+
+									res.on('end', (result) => {
+										this.logger.debug(`ldap status: ${result?.status}`);
+
+										// this.logger.debug('allValidDNsCache', this.allValidDNsCache);
+										resolve();
+									});
+								}
+							);
+						})
+				)
+			);
 			setTimeout(() => {
 				this.dnsFetch = undefined;
 			}, 60 * 60 * 12 * 1000); // reset cache after 12h
-			return dnResult;
+			return dns;
 		} catch (err) {
 			console.error('dns fetch err', err);
 			// retry dns fetch next time
