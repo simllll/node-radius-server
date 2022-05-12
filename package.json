@@ -41,7 +41,7 @@
 		"node-fetch": "^3.2.3",
 		"radius": "~1.1.4",
 		"smtp-client": "^0.4.0",
-		"yargs": "~17.4.0"
+		"yargs": "~17.5.0"
 	},
 	"license": "GPL-3.0",
 	"devDependencies": {
