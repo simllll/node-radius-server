@@ -40,13 +40,20 @@ function isValidLogLevel(debug?: string): debug is LogLevel | undefined {
 			s: config.secret || 'testing123',
 			authentication: config.authentication,
 			authenticationOptions: config.authenticationOptions,
+			vlan: config.vlan || undefined,
 		})
 		.describe('port', 'RADIUS server listener port')
 		.alias('s', 'secret')
 		.describe('secret', 'RADIUS secret')
 		.number('port')
 		.string(['secret', 'authentication']) as {
-		argv: { port?: number; secret?: string; authentication?: string; authenticationOptions?: any };
+		argv: {
+			vlan?: number;
+			port?: number;
+			secret?: string;
+			authentication?: string;
+			authenticationOptions?: any;
+		};
 	};
 
 	ctxLogger.log(`Listener Port: ${argv.port || 1812}`);
@@ -57,24 +64,25 @@ function isValidLogLevel(debug?: string): debug is LogLevel | undefined {
 	// configure auth mechanism
 	let auth: IAuthentication;
 	try {
-		const AuthMechanism = (await import(`./auth/${config.authentication}.js`))[
-			config.authentication
-		];
-		auth = new AuthMechanism(config.authenticationOptions, logger);
+		const AuthMechanism = (
+			await import(`./auth/${argv.authentication || config.authentication}.js`)
+		)[argv.authentication || config.authentication];
+		auth = new AuthMechanism(argv.authenticationOptions || config.authenticationOptions, logger);
 	} catch (err) {
-		ctxLogger.error('cannot load auth mechanisms', config.authentication);
+		ctxLogger.error('cannot load auth mechanisms', argv.authentication || config.authentication);
 		throw err;
 	}
 	// start radius server
 	const authentication = new Authentication(auth, logger);
 
 	const server = new RadiusServer({
-		secret: config.secret,
-		port: config.port,
+		secret: argv.secret || config.secret,
+		port: argv.port || config.port,
 		address: '0.0.0.0',
 		tlsOptions: config.certificate,
 		authentication,
 		logger,
+		vlan: argv.vlan || config.vlan,
 	});
 
 	// start server

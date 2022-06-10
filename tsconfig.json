@@ -6,7 +6,7 @@
 		// target settings for node js
 		"module": "ES2020",
 		"target": "ES2021",
-		"lib": ["ES2021", "dom"],
+		"lib": ["ES2021"],
 
 		// for CommonJS module imports
 		"allowSyntheticDefaultImports": true,
