@@ -80,6 +80,16 @@ export class UDPServer extends events.EventEmitter implements IServer {
 		return startServer.promise;
 	}
 
+	async stop(): Promise<void> {
+		const stopServer = newDeferredPromise();
+		this.server.close(() => {
+			this.logger.log('UDPServer', `radius server closed`);
+			stopServer.resolve();
+		});
+
+		return stopServer.promise;
+	}
+
 	private setupListeners() {
 		this.server.on('message', (message, rinfo) => this.emit('message', message, rinfo));
 	}
